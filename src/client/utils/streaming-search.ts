@@ -98,6 +98,7 @@ export async function performStreamingSearch(
   closeMediaPreview();
   hideAcDropdown(document.getElementById("ac-dropdown-home"));
   hideAcDropdown(document.getElementById("ac-dropdown-results"));
+  (document.activeElement as HTMLElement | null)?.blur();
   const resultsInput = document.getElementById(
     "results-search-input",
   ) as HTMLInputElement | null;
@@ -163,6 +164,14 @@ export async function performStreamingSearch(
 
   const source = new EventSource(streamUrl);
   _activeSource = source;
+
+  resultsList?.addEventListener("click", (ev) => {
+    const anchor = (ev.target as Element).closest("a");
+    if (anchor && _activeSource === source) {
+      source.close();
+      _activeSource = null;
+    }
+  });
 
   source.addEventListener("engine-result", (e) => {
     const data = JSON.parse(e.data) as StreamEngineResult;

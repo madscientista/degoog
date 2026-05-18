@@ -153,6 +153,7 @@ export async function performSearch(
   closeMediaPreview();
   hideAcDropdown(document.getElementById("ac-dropdown-home"));
   hideAcDropdown(document.getElementById("ac-dropdown-results"));
+  (document.activeElement as HTMLElement | null)?.blur();
 
   const resultsInput = document.getElementById(
     "results-search-input",
@@ -365,6 +366,7 @@ async function _performBangCommand(
   closeMediaPreview();
   hideAcDropdown(document.getElementById("ac-dropdown-home"));
   hideAcDropdown(document.getElementById("ac-dropdown-results"));
+  (document.activeElement as HTMLElement | null)?.blur();
   const resultsInput = document.getElementById(
     "results-search-input",
   ) as HTMLInputElement | null;
