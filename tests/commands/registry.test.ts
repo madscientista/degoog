@@ -48,4 +48,26 @@ describe("commands registry", () => {
     expect(matchBangCommand("help")).toBeNull();
     expect(matchBangCommand("foo")).toBeNull();
   });
+
+  test("matchBangCommand parses trailing bang: 'some query !help'", () => {
+    const match = matchBangCommand("some query !help");
+    expect(match).not.toBeNull();
+    if (!match) return;
+    expect(match.type).toBe("command");
+    if (match.type === "command") {
+      expect(match.command.trigger).toBe("help");
+      expect(match.args).toBe("some query");
+    }
+  });
+
+  test("matchBangCommand trailing bang returns null without space before !", () => {
+    expect(matchBangCommand("foo!help")).toBeNull();
+  });
+
+  test("matchBangCommand leading bang still takes priority", () => {
+    const match = matchBangCommand("!help trailing text");
+    expect(match).not.toBeNull();
+    if (!match || match.type !== "command") return;
+    expect(match.args).toBe("trailing text");
+  });
 });

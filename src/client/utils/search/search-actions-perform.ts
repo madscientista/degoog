@@ -108,7 +108,7 @@ export async function performSearch(
     }
   }
 
-  if (query.trim().startsWith("!")) {
+  if (query.trim().startsWith("!") || /\s!\S+$/.test(query.trim())) {
     state.currentQuery = query;
     return _performBangCommand(query, resolvedType, page || 1, isInit);
   }

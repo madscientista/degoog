@@ -392,12 +392,22 @@ export type BangMatch =
 
 export function matchBangCommand(query: string): BangMatch | null {
   const trimmed = query.trim();
-  if (!trimmed.startsWith("!")) return null;
-  const withoutBang = trimmed.slice(1);
-  const spaceIdx = withoutBang.indexOf(" ");
-  const trigger =
-    spaceIdx === -1 ? withoutBang : withoutBang.slice(0, spaceIdx);
-  const args = spaceIdx === -1 ? "" : withoutBang.slice(spaceIdx + 1);
+
+  let trigger: string;
+  let args: string;
+
+  if (trimmed.startsWith("!")) {
+    const withoutBang = trimmed.slice(1);
+    const spaceIdx = withoutBang.indexOf(" ");
+    trigger = spaceIdx === -1 ? withoutBang : withoutBang.slice(0, spaceIdx);
+    args = spaceIdx === -1 ? "" : withoutBang.slice(spaceIdx + 1);
+  } else {
+    const trailingMatch = trimmed.match(/\s!(\S+)$/);
+    if (!trailingMatch) return null;
+    trigger = trailingMatch[1];
+    args = trimmed.slice(0, trailingMatch.index!).trim();
+  }
+
   const lowerTrigger = trigger.toLowerCase();
 
   const map = getCommandMap();
