@@ -295,6 +295,39 @@ a:hover {
   margin: 0;
 }
 
+.doc-cli-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--degoog-docs-space-12);
+  background: var(--degoog-docs-surface);
+  border: var(--degoog-docs-border-w) solid var(--degoog-docs-border);
+  border-left: 3px solid var(--degoog-docs-text);
+  padding: var(--degoog-docs-space-14) var(--degoog-docs-space-16);
+  margin-bottom: var(--degoog-docs-space-28);
+  font-size: var(--degoog-docs-font-14);
+  line-height: 1.6;
+}
+
+.doc-cli-banner i {
+  color: var(--degoog-docs-text-muted);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.doc-cli-banner p {
+  margin: 0;
+  color: var(--degoog-docs-text);
+}
+
+.doc-cli-banner a {
+  color: var(--degoog-docs-text);
+  text-decoration: underline;
+}
+
+.doc-cli-banner code {
+  font-size: var(--degoog-docs-font-12);
+}
+
 .degoog-docs-main h2 {
   margin: 2rem 0 0.75rem;
   padding-bottom: 0.3rem;

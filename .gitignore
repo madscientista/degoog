@@ -8,3 +8,5 @@ data/
 stores
 dist
 mcp
+degoog-cli
+.DS_Store
