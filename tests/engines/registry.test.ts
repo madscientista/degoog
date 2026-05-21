@@ -4,8 +4,6 @@ import {
   getEngineMap,
   getEngineRegistry,
   getEnginesForSearchType,
-  getDefaultEngineConfig,
-  getOutgoingAllowlist,
 } from "../../src/server/extensions/engines/registry";
 
 describe("engines registry", () => {
@@ -17,42 +15,22 @@ describe("engines registry", () => {
     else delete process.env.DEGOOG_ENGINES_DIR;
   });
 
-  test("getEngineMap returns builtin engines", () => {
+  test("no built-in engines remain", () => {
     const map = getEngineMap();
-    expect(map["duckduckgo"]).toBeDefined();
-    expect(map["google"]).toBeUndefined();
-    expect(map["duckduckgo"].name).toBe("DuckDuckGo");
+    expect(map["duckduckgo"]).toBeUndefined();
+    expect(map["bing"]).toBeUndefined();
+    expect(map["brave"]).toBeUndefined();
+    expect(map["wikipedia"]).toBeUndefined();
+    expect(map["reddit"]).toBeUndefined();
   });
 
-  test("getEngineRegistry returns list with id and displayName", () => {
+  test("registry is empty with no installed engines", () => {
     const reg = getEngineRegistry();
-    expect(Array.isArray(reg)).toBe(true);
-    const ddg = reg.find((e) => e.id === "duckduckgo");
-    expect(ddg).toBeDefined();
-    expect(ddg!.displayName).toBe("DuckDuckGo");
+    expect(reg.length).toBe(0);
   });
 
-  test("getEnginesForSearchType returns web engines for type web", async () => {
-    const config: Record<string, boolean> = { duckduckgo: true, google: false };
-    const engines = await getEnginesForSearchType("web", config);
-    expect(engines.length).toBeGreaterThan(0);
-    expect(engines.some((e) => e.instance.name === "DuckDuckGo")).toBe(true);
-  });
-
-  test("getEnginesForSearchType returns array for images type", async () => {
-    const engines = await getEnginesForSearchType("images", {});
-    expect(Array.isArray(engines)).toBe(true);
-  });
-
-  test("getDefaultEngineConfig returns object keyed by engine id", () => {
-    const config = getDefaultEngineConfig();
-    expect(typeof config).toBe("object");
-    expect("duckduckgo" in config || "google" in config).toBe(true);
-  });
-
-  test("getOutgoingAllowlist returns deduped hostnames array", () => {
-    const list = getOutgoingAllowlist();
-    expect(Array.isArray(list)).toBe(true);
-    expect(list).toEqual([...new Set(list)]);
+  test("getEnginesForSearchType returns empty list with no engines installed", async () => {
+    const engines = await getEnginesForSearchType("web", {});
+    expect(engines.length).toBe(0);
   });
 });

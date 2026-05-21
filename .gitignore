@@ -5,6 +5,7 @@ src/public/themes/degoog-theme/style.css
 src/public/app.js
 src/public/settings-page.js
 data/
+data_bak/
 stores
 dist
 mcp

@@ -21,15 +21,6 @@ import { enginesDir, defaultEnginesFile } from "../../utils/paths";
 import { readFileSync } from "fs";
 import { createRegistry } from "../registry-factory";
 import { extensionReadmeExists } from "../../utils/extension-docs";
-import { BingEngine } from "./bing";
-import { BingImagesEngine } from "./bing-images";
-import { BingNewsEngine } from "./bing-news";
-import { BingVideosEngine } from "./bing-videos";
-import { BraveEngine } from "./brave";
-import { BraveNewsEngine } from "./brave-news";
-import { DuckDuckGoEngine } from "./duckduckgo";
-import { RedditEngine } from "./reddit";
-import { WikipediaEngine } from "./wikipedia";
 
 export type EngineSearchType =
   | "web"
@@ -38,92 +29,8 @@ export type EngineSearchType =
   | "news"
   | (string & {});
 
-export interface EngineDefinition {
-  id: string;
-  displayName: string;
-  searchType: EngineSearchType;
-  EngineClass: new () => SearchEngine;
-  description?: string;
-  disabledByDefault?: boolean;
-  /** @deprecated Legacy outgoing-fetch allowlist. Sign image URLs with ctx.signProxyUrl instead. */
-  outgoingHosts?: string[];
-  defaultTransport?: string;
-}
-
-const BUILTIN_DEFINITIONS: EngineDefinition[] = [
-  {
-    id: "duckduckgo",
-    displayName: "DuckDuckGo",
-    searchType: "web",
-    EngineClass: DuckDuckGoEngine,
-  },
-  {
-    id: "bing",
-    displayName: "Bing",
-    searchType: "web",
-    EngineClass: BingEngine,
-    disabledByDefault: true,
-  },
-  {
-    id: "brave",
-    displayName: "Brave Search",
-    searchType: "web",
-    EngineClass: BraveEngine,
-  },
-  {
-    id: "wikipedia",
-    displayName: "Wikipedia",
-    searchType: "web",
-    EngineClass: WikipediaEngine,
-  },
-  {
-    id: "reddit",
-    displayName: "Reddit",
-    searchType: "web",
-    EngineClass: RedditEngine,
-  },
-  {
-    id: "bing-images",
-    displayName: "Bing Images",
-    searchType: "images",
-    EngineClass: BingImagesEngine,
-  },
-  {
-    id: "bing-videos",
-    displayName: "Bing Videos",
-    searchType: "videos",
-    EngineClass: BingVideosEngine,
-  },
-  {
-    id: "brave-news",
-    displayName: "Brave News",
-    searchType: "news",
-    EngineClass: BraveNewsEngine,
-  },
-  {
-    id: "bing-news",
-    displayName: "Bing News",
-    searchType: "news",
-    EngineClass: BingNewsEngine,
-  },
-];
-
-const webIds = BUILTIN_DEFINITIONS.filter((d) => d.searchType === "web").map(
-  (d) => d.id,
-);
-export const ENGINE_IDS = webIds as readonly string[];
-export type EngineId = (typeof ENGINE_IDS)[number];
-
-const builtinMap = Object.fromEntries(
-  BUILTIN_DEFINITIONS.map((d) => [d.id, new d.EngineClass()]),
-) as Record<string, SearchEngine>;
-
-const builtinRegistry = BUILTIN_DEFINITIONS.map((d) => ({
-  id: d.id,
-  displayName: d.displayName,
-  disabledByDefault: d.disabledByDefault,
-  searchType: d.searchType,
-}));
+export const ENGINE_IDS = [] as readonly string[];
+export type EngineId = string;
 
 interface PluginEntry {
   id: string;
@@ -132,11 +39,9 @@ interface PluginEntry {
   description?: string;
   instance: SearchEngine;
   disabledByDefault?: boolean;
-  /** @deprecated Legacy outgoing-fetch allowlist. Sign image URLs with ctx.signProxyUrl instead. */
-  outgoingHosts?: string[];
 }
 
-function isSearchEngine(val: unknown): val is SearchEngine {
+const isSearchEngine = (val: unknown): val is SearchEngine => {
   return (
     typeof val === "object" &&
     val !== null &&
@@ -145,10 +50,11 @@ function isSearchEngine(val: unknown): val is SearchEngine {
     "executeSearch" in val &&
     typeof (val as SearchEngine).executeSearch === "function"
   );
-}
+};
 
 const engineRegistry = createRegistry<PluginEntry>({
-  dirs: () => [{ dir: enginesDir(), source: "plugin" }],
+  dirs: () => [{ dir: enginesDir() }],
+  canonicalIdKind: "engine",
   match: (mod) => {
     const Export = mod.default ?? mod.engine ?? mod.Engine;
     const instance: SearchEngine =
@@ -166,15 +72,10 @@ const engineRegistry = createRegistry<PluginEntry>({
       description:
         typeof mod.description === "string" ? mod.description : undefined,
       instance,
-      outgoingHosts:
-        Array.isArray(mod.outgoingHosts) &&
-          (mod.outgoingHosts as unknown[]).length > 0
-          ? (mod.outgoingHosts as string[])
-          : undefined,
     };
   },
-  onLoad: async (entry, { entryPath, folderName }) => {
-    entry.id = `engine-${folderName}`;
+  onLoad: async (entry, { entryPath, canonicalId, folderName }) => {
+    entry.id = canonicalId ?? `${folderName}-engine`;
     entry.instance.t = await createTranslatorFromPath(entryPath);
     if (entry.instance.configure && entry.instance.settingsSchema?.length) {
       const stored = await getSettings(entry.id);
@@ -187,30 +88,26 @@ const engineRegistry = createRegistry<PluginEntry>({
   debugTag: "engines",
 });
 
-export function getEngineRegistry(): {
+export const getEngineRegistry = (): {
   id: string;
   displayName: string;
   disabledByDefault?: boolean;
   searchType?: EngineSearchType;
-}[] {
-  return [
-    ...builtinRegistry,
-    ...engineRegistry.items().map((e) => ({
-      id: e.id,
-      displayName: e.displayName,
-      disabledByDefault: e.disabledByDefault,
-      searchType: e.searchType,
-    })),
-  ];
-}
+}[] =>
+  engineRegistry.items().map((e) => ({
+    id: e.id,
+    displayName: e.displayName,
+    disabledByDefault: e.disabledByDefault,
+    searchType: e.searchType,
+  }));
 
-export async function getEffectiveEngineRegistry(): Promise<{
+export const getEffectiveEngineRegistry = async (): Promise<{
   id: string;
   displayName: string;
   disabledByDefault?: boolean;
   searchType?: EngineSearchType;
-}[]> {
-  const plugins = await Promise.all(
+}[]> => {
+  return Promise.all(
     engineRegistry.items().map(async (e) => ({
       id: e.id,
       displayName: e.displayName,
@@ -218,39 +115,22 @@ export async function getEffectiveEngineRegistry(): Promise<{
       searchType: ((await getTypeOverride(e.id)) ?? e.searchType) as EngineSearchType,
     })),
   );
-  return [...builtinRegistry, ...plugins];
-}
+};
 
-/** @deprecated Legacy outgoing-fetch allowlist. Sign image URLs with ctx.signProxyUrl instead. */
-export function getOutgoingAllowlist(): string[] {
-  const fromBuiltins = BUILTIN_DEFINITIONS.flatMap(
-    (d) => d.outgoingHosts ?? [],
-  );
-  const fromPlugins = engineRegistry
-    .items()
-    .flatMap((e) => e.outgoingHosts ?? []);
-  const all = [...fromBuiltins, ...fromPlugins];
-  return [...new Set(all)];
-}
+export const getEngineMap = (): Record<string, SearchEngine> =>
+  Object.fromEntries(engineRegistry.items().map((e) => [e.id, e.instance]));
 
-export function getEngineMap(): Record<string, SearchEngine> {
-  const pluginMap = Object.fromEntries(
-    engineRegistry.items().map((e) => [e.id, e.instance]),
-  );
-  return { ...builtinMap, ...pluginMap };
-}
-
-function engineSearchTypeFromSearchType(
+const engineSearchTypeFromSearchType = (
   type: SearchType,
-): EngineSearchType | null {
+): EngineSearchType | null => {
   if (type === "web") return "web";
   if (type === "images" || type === "videos" || type === "news") return type;
   return null;
-}
+};
 
-export async function getEnginesForCustomType(
+export const getEnginesForCustomType = async (
   engineType: string,
-): Promise<{ id: string; instance: SearchEngine }[]> {
+): Promise<{ id: string; instance: SearchEngine }[]> => {
   const results: { id: string; instance: SearchEngine }[] = [];
   for (const e of engineRegistry.items()) {
     if (await isDisabled(e.id)) continue;
@@ -258,11 +138,11 @@ export async function getEnginesForCustomType(
     if (effectiveType === engineType) results.push({ id: e.id, instance: e.instance });
   }
   return results;
-}
+};
 
 const BUILTIN_TYPES = new Set(["web", "news", "images", "videos"]);
 
-export async function getCustomEngineTypes(): Promise<string[]> {
+export const getCustomEngineTypes = async (): Promise<string[]> => {
   const types = new Set<string>();
   for (const e of engineRegistry.items()) {
     if (await isDisabled(e.id)) continue;
@@ -270,25 +150,23 @@ export async function getCustomEngineTypes(): Promise<string[]> {
     if (!BUILTIN_TYPES.has(effectiveType)) types.add(effectiveType);
   }
   return [...types];
-}
+};
 
-export async function getEngineSearchType(engineId: string): Promise<string | null> {
-  const builtin = BUILTIN_DEFINITIONS.find((d) => d.id === engineId);
-  if (builtin) return builtin.searchType;
+export const getEngineSearchType = async (engineId: string): Promise<string | null> => {
   const plugin = engineRegistry.items().find((e) => e.id === engineId);
   if (!plugin) return null;
   return (await getTypeOverride(engineId)) ?? plugin.searchType;
-}
+};
 
-function engineRequiresConfig(engine: SearchEngine): boolean {
+const engineRequiresConfig = (engine: SearchEngine): boolean => {
   const schema = engine.settingsSchema ?? [];
   return schema.some((f) => f.required === true);
-}
+};
 
-async function hasRequiredConfig(
+const hasRequiredConfig = async (
   engineId: string,
   instance: SearchEngine,
-): Promise<boolean> {
+): Promise<boolean> => {
   const schema = instance.settingsSchema ?? [];
   const requiredKeys = schema.filter((f) => f.required).map((f) => f.key);
   if (requiredKeys.length === 0) return true;
@@ -298,65 +176,39 @@ async function hasRequiredConfig(
     if (Array.isArray(v)) return v.length > 0;
     return typeof v === "string" && v.trim() !== "";
   });
-}
+};
 
-export async function getEnginesForSearchType(
+export const getEnginesForSearchType = async (
   type: SearchType,
   config: EngineConfig,
-): Promise<{ id: string; instance: SearchEngine }[]> {
+): Promise<{ id: string; instance: SearchEngine }[]> => {
   const engineType = engineSearchTypeFromSearchType(type);
   if (!engineType) return [];
 
-  const engineMap = getEngineMap();
   const active: { id: string; instance: SearchEngine }[] = [];
-
-  for (const def of BUILTIN_DEFINITIONS.filter((d) => d.searchType === engineType)) {
-    if (config[def.id]) {
-      const instance = engineMap[def.id];
-      if (instance) active.push({ id: def.id, instance });
-    }
-  }
-
   for (const e of engineRegistry.items()) {
     if (!config[e.id]) continue;
     const effectiveType = (await getTypeOverride(e.id)) ?? e.searchType;
     if (effectiveType === engineType) {
-      const instance = engineMap[e.id];
-      if (instance) active.push({ id: e.id, instance });
+      active.push({ id: e.id, instance: e.instance });
     }
   }
-
   return active;
-}
+};
 
 export const getActiveWebEngines = async (
   config: EngineConfig,
 ): Promise<{ id: string; instance: SearchEngine; score: number }[]> => {
-  const engineMap = getEngineMap();
   const active: { id: string; instance: SearchEngine; score: number }[] = [];
-
-  for (const def of BUILTIN_DEFINITIONS.filter((d) => d.searchType === "web")) {
-    if (!config[def.id]) continue;
-    const instance = engineMap[def.id];
-    if (!instance) continue;
-    if (engineRequiresConfig(instance) && !(await hasRequiredConfig(def.id, instance))) continue;
-    const stored = await getSettings(def.id);
-    const score = Math.max(parseFloat(asString(stored["score"])) || 1, 0.1);
-    active.push({ id: def.id, instance, score });
-  }
-
   for (const e of engineRegistry.items()) {
     if (!config[e.id]) continue;
     const effectiveType = (await getTypeOverride(e.id)) ?? e.searchType;
     if (effectiveType !== "web") continue;
-    const instance = engineMap[e.id];
-    if (!instance) continue;
-    if (engineRequiresConfig(instance) && !(await hasRequiredConfig(e.id, instance))) continue;
+    if (engineRequiresConfig(e.instance) && !(await hasRequiredConfig(e.id, e.instance))) continue;
     const stored = await getSettings(e.id);
     const score = Math.max(parseFloat(asString(stored["score"])) || 1, 0.1);
-    active.push({ id: e.id, instance, score });
+    active.push({ id: e.id, instance: e.instance, score });
   }
-
   return active;
 };
 
@@ -369,7 +221,7 @@ const _loadDefaultEngineOverrides = (): Record<string, boolean> => {
   }
 };
 
-export function getDefaultEngineConfig(): Record<string, boolean> {
+export const getDefaultEngineConfig = (): Record<string, boolean> => {
   const entries = getEngineRegistry();
   const engineMap = getEngineMap();
   const overrides = _loadDefaultEngineOverrides();
@@ -383,7 +235,7 @@ export function getDefaultEngineConfig(): Record<string, boolean> {
       return [e.id, !disabledByDefault];
     }),
   );
-}
+};
 
 const SCORE_FIELD: SettingField = {
   key: "score",
@@ -402,7 +254,7 @@ const OUTGOING_TRANSPORT_FIELD: SettingField = {
   options: ["fetch", "curl", "curl-fallback"],
   default: "fetch",
   description:
-    "The outgoing HTTP client to use for this engine. Select 'auto' to use the best available client based on your system configuration.",
+    "The outgoing HTTP client to use for this engine.",
   advanced: true,
 };
 
@@ -437,23 +289,18 @@ const PROXY_OVERRIDE_URLS_FIELD: SettingField = {
   visibleWhen: { key: "proxyOverrideEnabled", equals: "true" },
 };
 
-export function getEngineIdByInstance(
+export const getEngineIdByInstance = (
   instance: SearchEngine,
-): string | undefined {
-  for (const d of BUILTIN_DEFINITIONS) {
-    if (builtinMap[d.id] === instance) return d.id;
-  }
+): string | undefined => {
   for (const e of engineRegistry.items()) {
     if (e.instance === instance) return e.id;
   }
   return undefined;
-}
+};
 
 export const getEngineDefaultTransport = (
   engineId: string,
 ): string | undefined => {
-  const builtinDef = BUILTIN_DEFINITIONS.find((d) => d.id === engineId);
-  if (builtinDef?.defaultTransport) return builtinDef.defaultTransport;
   const instance = getEngineMap()[engineId];
   const field = instance?.settingsSchema?.find(
     (f) => f.key === "outgoingTransport",
@@ -461,21 +308,10 @@ export const getEngineDefaultTransport = (
   return field?.default ?? undefined;
 };
 
-export async function getEngineExtensionMeta(
+export const getEngineExtensionMeta = async (
   coreT?: Translate,
-): Promise<ExtensionMeta[]> {
-  const pluginItems = engineRegistry.items();
-  const allDefs = [
-    ...BUILTIN_DEFINITIONS,
-    ...pluginItems.map((e) => ({
-      id: e.id,
-      displayName: e.displayName,
-      searchType: e.searchType,
-      description: e.description,
-      instance: e.instance,
-    })),
-  ];
-
+): Promise<ExtensionMeta[]> => {
+  const items = engineRegistry.items();
   const engineMap = getEngineMap();
   const results: ExtensionMeta[] = [];
   const transportOptions = getTransportNames();
@@ -504,20 +340,17 @@ export async function getEngineExtensionMeta(
     : OUTGOING_TRANSPORT_FIELD;
 
   const defaults = getDefaultEngineConfig();
-  for (const def of allDefs) {
-    const instance = engineMap[def.id];
+  for (const entry of items) {
+    const instance = engineMap[entry.id];
     const engineSchema = instance?.settingsSchema ?? [];
 
     const engineTransportField = engineSchema.find(
       (f) => f.key === "outgoingTransport",
     );
     const engineScoreField = engineSchema.find((f) => f.key === "score");
-    const builtinDef = BUILTIN_DEFINITIONS.find((d) => d.id === def.id);
 
     const transportDefault =
-      engineTransportField?.default ??
-      builtinDef?.defaultTransport ??
-      OUTGOING_TRANSPORT_FIELD.default;
+      engineTransportField?.default ?? OUTGOING_TRANSPORT_FIELD.default;
 
     const transportField: SettingField = {
       ...baseTransportField,
@@ -533,15 +366,13 @@ export async function getEngineExtensionMeta(
       }
       : baseScoreField;
 
-    const pluginEntry = pluginItems.find((e) => e.id === def.id);
-    const pluginT = pluginEntry?.instance.t;
-
+    const pluginT = entry.instance.t;
     const engineSchemaFiltered = engineSchema.filter(
       (f) => f.key !== "outgoingTransport" && f.key !== "score",
     );
     const translatedEngineSchema = pluginT
       ? engineSchemaFiltered.map((field) => {
-        const base = `${def.id}.settings.${field.key}`;
+        const base = `${entry.id}.settings.${field.key}`;
         const label = pluginT(`${base}.label`);
         const desc =
           field.description !== undefined
@@ -557,31 +388,25 @@ export async function getEngineExtensionMeta(
           ...(desc !== undefined && desc !== `${base}.description`
             ? { description: desc }
             : {}),
-          ...(placeholder !== undefined &&
-            placeholder !== `${base}.placeholder`
+          ...(placeholder !== undefined && placeholder !== `${base}.placeholder`
             ? { placeholder }
             : {}),
         };
       })
       : engineSchemaFiltered;
 
-    const isPlugin = !!pluginEntry;
-    const effectiveType = isPlugin
-      ? ((await getTypeOverride(def.id)) ?? def.searchType)
-      : def.searchType;
+    const effectiveType = (await getTypeOverride(entry.id)) ?? entry.searchType;
 
-    const typeOverrideField: SettingField | null = isPlugin
-      ? {
-        key: "searchTypeOverride",
-        label: "Engine type",
-        type: "text",
-        default: def.searchType,
-        description:
-          "Override the tab this engine belongs to (e.g. 'image' can be changed to 'file'). Changing this affects the tab and trigger used to search with it. Leave blank to use the default.",
-        advanced: true,
-        placeholder: def.searchType,
-      }
-      : null;
+    const typeOverrideField: SettingField = {
+      key: "searchTypeOverride",
+      label: "Engine type",
+      type: "text",
+      default: entry.searchType,
+      description:
+        "Override the tab this engine belongs to. Leave blank to use the default.",
+      advanced: true,
+      placeholder: entry.searchType,
+    };
 
     const schema: SettingField[] = [
       scoreField,
@@ -589,58 +414,49 @@ export async function getEngineExtensionMeta(
       CUSTOM_USER_AGENTS_FIELD,
       PROXY_OVERRIDE_ENABLED_FIELD,
       PROXY_OVERRIDE_URLS_FIELD,
-      ...(typeOverrideField ? [typeOverrideField] : []),
+      typeOverrideField,
       ...translatedEngineSchema,
     ];
-    const rawSettings = await getSettings(def.id);
+    const rawSettings = await getSettings(entry.id);
     const maskedSettings = maskSecrets(rawSettings, schema);
-    const { exists } = await extensionReadmeExists(def.id);
+    const { exists } = await extensionReadmeExists(entry.id);
 
     results.push({
-      id: def.id,
-      displayName: def.displayName,
-      description: def.description ?? "",
+      id: entry.id,
+      displayName: entry.displayName,
+      description: entry.description ?? "",
       searchType: effectiveType,
       type: ExtensionStoreType.Engine,
       configurable: true,
       settingsSchema: schema,
       settings: maskedSettings,
       extensionDocsAvailable: exists,
-      defaultEnabled: defaults[def.id],
+      defaultEnabled: defaults[entry.id],
     });
   }
 
   return results;
-}
+};
 
-export async function initEngines(): Promise<void> {
-  for (const def of BUILTIN_DEFINITIONS) {
-    const instance = builtinMap[def.id];
-    if (instance?.configure && instance.settingsSchema?.length) {
-      const stored = await getSettings(def.id);
-      instance.configure(mergeDefaults(stored, instance.settingsSchema));
-    }
-  }
-
+export const initEngines = async (): Promise<void> => {
   await engineRegistry.init();
-}
+};
 
-export async function reloadEngines(): Promise<void> {
+export const reloadEngines = async (): Promise<void> => {
   await initEngines();
-}
+};
 
-export function setEnginesLocale(locale: string): void {
+export const setEnginesLocale = (locale: string): void => {
   for (const entry of engineRegistry.items()) {
     entry.instance.t?.setLocale(locale);
   }
-}
+};
 
-export function getAllEngineTranslators(): {
+export const getAllEngineTranslators = (): {
   namespace: string;
   translator: Translate;
-}[] {
-  return engineRegistry
+}[] =>
+  engineRegistry
     .items()
     .filter((e) => !!e.instance.t)
     .map((e) => ({ namespace: `engines/${e.id}`, translator: e.instance.t! }));
-}
