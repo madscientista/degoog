@@ -116,14 +116,7 @@ export async function initThemes(): Promise<void> {
         };
 
         theme.compiledCss = await compileThemeCss(theme);
-
         theme.t = await createTranslatorFromPath(themeDir);
-
-        if (manifest.settingsSchema?.length) {
-          const stored = await getSettings(settingsId(entry.name));
-          if (Object.keys(stored).length > 0) {
-          }
-        }
 
         themes.push(theme);
       } catch (err) {

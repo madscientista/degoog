@@ -229,6 +229,7 @@
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query: MY_QUERY, variables: { search: query, page } }),
   });
+  context?.sentinel?.(response, this.name);
   const data = await response.json();
   // parse and return array of { title, url, snippet, source }
 }</code></pre>
@@ -327,8 +328,81 @@
                   outgoing allowlist configuration.
                 </td>
               </tr>
+              <tr>
+                <td><code>context.sentinel(response, name?)</code></td>
+                <td>
+                  <code>(response: { ok, status }, name?: string) =&gt; void</code>
+                </td>
+                <td>
+                  Call this right after every <code>doFetch</code> in your
+                  engine. If the upstream returned a non-OK status (403, 429,
+                  5xx, ...) it throws a structured <code>SentinelBreach</code> with
+                  a <code>status</code> of <code>"blocked"</code>,
+                  <code>"rate_limited"</code> or <code>"network"</code> that the
+                  orchestrator logs and surfaces back to the UI as a real
+                  "engine blocked" signal instead of a silent 0 results. Always
+                  prefer this to <code>if (!response.ok) return [];</code>.
+                </td>
+              </tr>
+              <tr>
+                <td><code>context.engineError(status, message, opts?)</code></td>
+                <td>
+                  <code>
+                    (status, message, opts?: { httpStatus?, engine? }) =&gt;
+                    Error
+                  </code>
+                </td>
+                <td>
+                  Build the same structured <code>SentinelBreach</code> manually
+                  when you detect a soft block (Cloudflare challenge page,
+                  consent interstitial, captcha HTML, empty JSON envelope from a
+                  rate-limited API, ...). Valid statuses:
+                  <code>"blocked"</code>, <code>"rate_limited"</code>,
+                  <code>"captcha"</code>, <code>"interstitial"</code>,
+                  <code>"parse_error"</code>, <code>"timeout"</code>,
+                  <code>"network"</code>.
+                </td>
+              </tr>
             </tbody>
           </table>
+          <h3>Surfacing upstream failures</h3>
+          <p>
+            Engines used to silently <code>return []</code> on a 403 or 429,
+            which made "engine got walled" indistinguishable from "no results
+            for this query". Don't do that anymore. Two rules:
+          </p>
+          <ol>
+            <li>
+              After every <code>const response = await doFetch(...)</code>, call
+              <code>context?.sentinel?.(response, this.name);</code>
+              before reading the body. This converts non-OK HTTP into a
+              structured throw the orchestrator understands.
+            </li>
+            <li>
+              If you have an outer <code>try / catch</code> that returns
+              <code>[]</code> on any error, re-throw structured engine errors so
+              they reach the orchestrator:
+              <pre><code>} catch (e) {
+  if (e?.name === "SentinelBreach") throw e;
+  return [];
+}</code></pre>
+              Without the re-throw, your catch swallows the new signal and the
+              UI is back to showing 0 results with no context.
+            </li>
+          </ol>
+          <p>
+            For soft blocks you detect yourself (Cloudflare challenge HTML,
+            JavaScript consent interstitial, empty API envelope from a
+            rate-limited backend, ...) build the error explicitly:
+          </p>
+          <pre><code>const html = await response.text();
+if (html.includes("cf-challenge")) {
+  throw context.engineError(
+    "captcha",
+    `${this.name} hit a Cloudflare challenge`,
+    { engine: this.name },
+  );
+}</code></pre>
           <p>
             The <code>timeFilter</code> parameter passed to
             <code>executeSearch</code> will be one of these options:
@@ -365,7 +439,7 @@
 
           <h2>Safe Search</h2>
           <p>
-            Our default engines like Brave, Google, and Bing include a
+            Our default engines like Brave and Bing include a
             <strong>Safe Search</strong> dropdown in Settings then Engines. The
             default behavior stays the same where Brave defaults to
             <code>moderate</code> and the rest default to <code>off</code>.

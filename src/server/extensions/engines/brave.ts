@@ -7,6 +7,7 @@ import type {
   SettingField,
 } from "../../types";
 import { getRandomUserAgent } from "../../utils/user-agents";
+import { sentinel } from "../../utils/sentinel";
 
 const BASE_URL = "https://search.brave.com/";
 const TIME_RANGE_MAP: Record<string, string> = {
@@ -85,6 +86,7 @@ export class BraveEngine implements SearchEngine {
       },
       redirect: "follow",
     });
+    sentinel(response, this.name);
 
     const html = await response.text();
     const $ = cheerio.load(html);

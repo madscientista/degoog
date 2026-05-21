@@ -4,6 +4,7 @@ import type {
   TimeFilter,
   EngineContext,
 } from "../../types";
+import { sentinel } from "../../utils/sentinel";
 
 const _wikimediaHeaders: Record<string, string> = {
   "User-Agent": "degoog/1.0 (+https://github.com/degoog-org/degoog)",
@@ -29,7 +30,7 @@ export class WikipediaEngine implements SearchEngine {
     const response = await doFetch(url, {
       headers: _wikimediaHeaders,
     });
-    if (!response.ok) return [];
+    sentinel(response, this.name);
 
     let data: unknown;
     try {

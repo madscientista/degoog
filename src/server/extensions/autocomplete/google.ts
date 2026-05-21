@@ -4,8 +4,7 @@ import type {
   AutocompleteSuggestion,
   RichSuggestion,
 } from "../../types";
-import { asBoolean } from "../../utils/plugin-settings";
-import type { SettingValue } from "../../utils/plugin-settings";
+import { asBoolean, type SettingValue } from "../../utils/plugin-settings";
 
 export class GoogleAutocompleteProvider implements AutocompleteProvider {
   name = "Google";

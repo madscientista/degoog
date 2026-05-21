@@ -8,6 +8,7 @@ import type {
   TimeFilter,
 } from "../../types";
 import { getRandomUserAgent } from "../../utils/user-agents";
+import { sentinel } from "../../utils/sentinel";
 
 const ASYNC_PAGE_SIZE = 35;
 
@@ -126,6 +127,7 @@ export class BingImagesEngine implements SearchEngine {
       },
       redirect: "follow",
     });
+    sentinel(response, this.name);
     const html = await response.text();
     const $ = cheerio.load(html);
     const results: SearchResult[] = [];

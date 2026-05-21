@@ -6,6 +6,7 @@ import type {
   SettingField,
 } from "../../types";
 import { getRandomUserAgent } from "../../utils/user-agents";
+import { sentinel } from "../../utils/sentinel";
 
 export class RedditEngine implements SearchEngine {
   name = "Reddit";
@@ -74,6 +75,7 @@ export class RedditEngine implements SearchEngine {
         "Sec-Fetch-Site": "same-origin",
       },
     });
+    sentinel(response, this.name);
     const data = (await response.json()) as {
       data: {
         children: Array<{

@@ -8,6 +8,7 @@ import type {
 } from "../../types";
 import { extractImageUrl } from "../../utils/extract-image";
 import { getRandomUserAgent } from "../../utils/user-agents";
+import { sentinel } from "../../utils/sentinel";
 
 const TIME_RANGE_MAP: Record<string, string> = {
   day: "pd",
@@ -78,6 +79,7 @@ export class BraveNewsEngine implements SearchEngine {
       },
       redirect: "follow",
     });
+    sentinel(res, this.name);
 
     const html = await res.text();
     const $ = cheerio.load(html);

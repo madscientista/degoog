@@ -7,6 +7,7 @@ import type {
   SettingField,
 } from "../../types";
 import { getRandomUserAgent } from "../../utils/user-agents";
+import { sentinel } from "../../utils/sentinel";
 
 function resolveDdgRedirect(href: string): string {
   try {
@@ -106,6 +107,7 @@ export class DuckDuckGoEngine implements SearchEngine {
       },
       redirect: "follow",
     });
+    sentinel(response, this.name);
     const html = await response.text();
     const $ = cheerio.load(html);
     const results: SearchResult[] = [];

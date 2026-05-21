@@ -7,6 +7,7 @@ import type {
   SettingField,
 } from "../../types";
 import { getRandomUserAgent } from "../../utils/user-agents";
+import { sentinel } from "../../utils/sentinel";
 
 export class BingEngine implements SearchEngine {
   name = "Bing";
@@ -80,6 +81,7 @@ export class BingEngine implements SearchEngine {
       },
       redirect: "follow",
     });
+    sentinel(response, this.name);
     const html = await response.text();
     const $ = cheerio.load(html);
     const results: SearchResult[] = [];

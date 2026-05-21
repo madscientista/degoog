@@ -18,6 +18,14 @@ import type {
   SearchType,
   TimeFilter,
 } from "./types";
+
+import {
+  THREAT_LEVEL,
+  SentinelBreach,
+  isSentinelBreach,
+  sentinel,
+  type ThreatLevel,
+} from "./utils/sentinel";
 import { extractImageUrl } from "./utils/extract-image";
 import { logger } from "./utils/logger";
 import { outgoingFetch, parseOutgoingTransport } from "./utils/outgoing";
@@ -178,6 +186,23 @@ const _withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
   ]);
 };
 
+const _classifyReject = (
+  err: unknown,
+): { status: string; httpStatus?: number; reason: string } => {
+  if (isSentinelBreach(err)) {
+    return {
+      status: err.status,
+      httpStatus: err.httpStatus,
+      reason: err.message,
+    };
+  }
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/timeout/i.test(msg)) {
+    return { status: THREAT_LEVEL.TIMEOUT, reason: msg };
+  }
+  return { status: THREAT_LEVEL.NETWORK, reason: msg };
+};
+
 export const scoreResults = (
   allResults: { results: SearchResult[]; multiplier?: number }[],
 ): ScoredResult[] => {
@@ -281,6 +306,10 @@ export const createSearchEngineContext = (
     extractImageUrl: extractImageUrl as EngineContext["extractImageUrl"],
     signProxyUrl: buildSignedProxyUrl,
     imageFilter,
+    sentinel: (response, engineName) =>
+      sentinel(response, engineName ?? engineSettingsId ?? "engine"),
+    engineError: (status, message, opts) =>
+      new SentinelBreach(status as ThreatLevel, message, opts),
   };
 };
 
@@ -384,21 +413,32 @@ export const search = async (
 
   for (let i = 0; i < settled.length; i++) {
     const result = settled[i];
+    const engineName = rawActiveEngines[i].instance.name;
     if (result.status === "fulfilled") {
       allResults.push({
         results: result.value.results,
         multiplier: rawActiveEngines[i].score,
       });
       engineTimings.push({
-        name: rawActiveEngines[i].instance.name,
+        name: engineName,
         time: result.value.elapsed,
         resultCount: result.value.results.length,
+        status: THREAT_LEVEL.OK,
       });
     } else {
+      const classified = _classifyReject(result.reason);
+      logger.warn(
+        "search",
+        `engine="${engineName}" status=${classified.status}${classified.httpStatus ? ` http=${classified.httpStatus}` : ""
+        } reason="${classified.reason}"`,
+      );
       engineTimings.push({
-        name: rawActiveEngines[i].instance.name,
+        name: engineName,
         time: ENGINE_TIMEOUT_MS,
         resultCount: 0,
+        status: classified.status,
+        errorReason: classified.reason,
+        httpStatus: classified.httpStatus,
       });
     }
   }

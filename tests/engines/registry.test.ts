@@ -20,7 +20,7 @@ describe("engines registry", () => {
   test("getEngineMap returns builtin engines", () => {
     const map = getEngineMap();
     expect(map["duckduckgo"]).toBeDefined();
-    expect(map["google"]).toBeDefined();
+    expect(map["google"]).toBeUndefined();
     expect(map["duckduckgo"].name).toBe("DuckDuckGo");
   });
 

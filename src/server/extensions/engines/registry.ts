@@ -28,9 +28,6 @@ import { BingVideosEngine } from "./bing-videos";
 import { BraveEngine } from "./brave";
 import { BraveNewsEngine } from "./brave-news";
 import { DuckDuckGoEngine } from "./duckduckgo";
-import { GoogleEngine } from "./google";
-import { GoogleImagesEngine } from "./google-images";
-import { GoogleVideosEngine } from "./google-videos";
 import { RedditEngine } from "./reddit";
 import { WikipediaEngine } from "./wikipedia";
 
@@ -54,13 +51,6 @@ export interface EngineDefinition {
 }
 
 const BUILTIN_DEFINITIONS: EngineDefinition[] = [
-  {
-    id: "google",
-    displayName: "Google",
-    searchType: "web",
-    EngineClass: GoogleEngine,
-    defaultTransport: "curl",
-  },
   {
     id: "duckduckgo",
     displayName: "DuckDuckGo",
@@ -93,25 +83,10 @@ const BUILTIN_DEFINITIONS: EngineDefinition[] = [
     EngineClass: RedditEngine,
   },
   {
-    id: "google-images",
-    displayName: "Google Images",
-    searchType: "images",
-    EngineClass: GoogleImagesEngine,
-    description: "Requires the [4play transport](https://github.com/degoog-org/official-extensions/tree/main/transports/degoog-fplay). Install it from the Store tab, then add the [browser extension](https://github.com/degoog-org/4play).",
-    disabledByDefault: true,
-    defaultTransport: "fplay",
-  },
-  {
     id: "bing-images",
     displayName: "Bing Images",
     searchType: "images",
     EngineClass: BingImagesEngine,
-  },
-  {
-    id: "google-videos",
-    displayName: "Google Videos",
-    searchType: "videos",
-    EngineClass: GoogleVideosEngine,
   },
   {
     id: "bing-videos",

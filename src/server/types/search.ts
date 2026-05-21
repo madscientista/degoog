@@ -123,6 +123,9 @@ export interface EngineTiming {
   name: string;
   time: number;
   resultCount: number;
+  status?: string;
+  errorReason?: string;
+  httpStatus?: number;
 }
 
 export type EngineFetch = (
@@ -147,6 +150,15 @@ export interface EngineContext {
   ) => string;
   signProxyUrl?: (url: string) => string;
   imageFilter?: ImageFilter;
+  sentinel?: (
+    response: { ok: boolean; status: number },
+    engineName?: string,
+  ) => void;
+  engineError?: (
+    status: string,
+    message: string,
+    opts?: { httpStatus?: number; engine?: string },
+  ) => Error;
 }
 
 export interface SearchResponse {

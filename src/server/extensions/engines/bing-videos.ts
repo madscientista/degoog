@@ -8,6 +8,7 @@ import type {
   SettingField,
 } from "../../types";
 import { getRandomUserAgent } from "../../utils/user-agents";
+import { sentinel } from "../../utils/sentinel";
 
 const BING_VIDEO_RESULTS_SCP = '[data-svcptid="VideoResults"]';
 
@@ -96,6 +97,7 @@ export class BingVideosEngine implements SearchEngine {
       },
       redirect: "follow",
     });
+    sentinel(response, this.name);
     const html = await response.text();
     const $ = cheerio.load(html);
     const results: SearchResult[] = [];
