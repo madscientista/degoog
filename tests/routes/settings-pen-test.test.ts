@@ -7,6 +7,9 @@ type Router = {
 
 const CORRECT_PASSWORD = "pentest-secret-pw-77x";
 
+const importPagesRouter = (): Promise<{ default: Router }> =>
+  import(`../../src/server/routes/pages?pen-test=${Date.now()}`);
+
 let pagesRouter: Router;
 let authRouter: Router;
 let settingsRouter: Router;
@@ -14,20 +17,23 @@ let settingsRouter: Router;
 let savedPublic: string | undefined;
 let savedPasswords: string | undefined;
 let savedDistrust: string | undefined;
+let savedSettingsPath: string | undefined;
 
 beforeAll(async () => {
   savedPublic = process.env.DEGOOG_PUBLIC_INSTANCE;
   savedPasswords = process.env.DEGOOG_SETTINGS_PASSWORDS;
   savedDistrust = process.env.DEGOOG_DISTRUST_PROXY;
+  savedSettingsPath = process.env.DEGOOG_SETTINGS_PATH;
 
   process.env.DEGOOG_PUBLIC_INSTANCE = "true";
   process.env.DEGOOG_SETTINGS_PASSWORDS = CORRECT_PASSWORD;
   process.env.DEGOOG_DISTRUST_PROXY = "0";
+  delete process.env.DEGOOG_SETTINGS_PATH;
 
   await initServerKey();
 
   const [pagesMod, authMod, settingsMod] = await Promise.all([
-    import("../../src/server/routes/pages"),
+    importPagesRouter(),
     import("../../src/server/routes/settings-auth"),
     import("../../src/server/routes/settings"),
   ]);
@@ -47,6 +53,9 @@ afterAll(() => {
   if (savedDistrust !== undefined)
     process.env.DEGOOG_DISTRUST_PROXY = savedDistrust;
   else delete process.env.DEGOOG_DISTRUST_PROXY;
+  if (savedSettingsPath !== undefined)
+    process.env.DEGOOG_SETTINGS_PATH = savedSettingsPath;
+  else delete process.env.DEGOOG_SETTINGS_PATH;
 });
 
 const authPost = (password: string, ip: string) =>
@@ -109,6 +118,10 @@ describe("public instance - no password", () => {
 });
 
 describe("public instance - password set", () => {
+  beforeAll(() => {
+    process.env.DEGOOG_SETTINGS_PASSWORDS = CORRECT_PASSWORD;
+  });
+
   test("GET /settings still returns public settings HTML", async () => {
     const res = await pagesRouter.request("http://localhost/settings");
     expect(res.status).toBe(200);

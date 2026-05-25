@@ -4,24 +4,36 @@ import { HOME_STEPS, SETTINGS_STEPS } from "./steps";
 import { isTourActive, runTour } from "./tour";
 
 const HOME_DONE_KEY = "degoog-wizard-home-done";
+const MANUAL_RESTART_KEY = "degoog-wizard-manual-restart";
+
+const runHomeTour = (): Promise<void> =>
+  runTour(HOME_STEPS, () => {
+    localStorage.setItem(HOME_DONE_KEY, "true");
+  });
 
 export const initHomeWizard = async (): Promise<void> => {
   if (isTourActive()) return;
   if (!document.getElementById("search-input")) return;
+
+  const manualRestart = sessionStorage.getItem(MANUAL_RESTART_KEY) === "true";
+  if (manualRestart) {
+    sessionStorage.removeItem(MANUAL_RESTART_KEY);
+    await runHomeTour();
+    return;
+  }
+
   if (localStorage.getItem(HOME_DONE_KEY) === "true") return;
   const done = await fetchWizardDone();
   if (done) return;
-  await runTour(HOME_STEPS, () => {
-    localStorage.setItem(HOME_DONE_KEY, "true");
-  });
+  await runHomeTour();
 };
 
 export const restartWizard = (): void => {
   if (isTourActive()) return;
+  sessionStorage.setItem(MANUAL_RESTART_KEY, "true");
   localStorage.removeItem(HOME_DONE_KEY);
-  void patchServerWizard(false).finally(() => {
-    window.location.href = `${getBase()}/`;
-  });
+  void patchServerWizard(false);
+  window.location.href = `${getBase()}/`;
 };
 
 export const initSettingsWizard = async (): Promise<void> => {
