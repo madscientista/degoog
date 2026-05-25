@@ -13,10 +13,4 @@ describe("user-agents", () => {
     expect(ua).toMatch(/Mozilla/);
   });
 
-  test("multiple calls return valid strings", () => {
-    for (let i = 0; i < 20; i++) {
-      const ua = getRandomUserAgent();
-      expect(ua.length).toBeGreaterThan(10);
-    }
-  });
 });

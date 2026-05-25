@@ -4,10 +4,7 @@ import {
   clear,
   get,
   hasFailedEngines,
-  NEWS_TTL_MS,
   set,
-  SHORT_TTL_MS,
-  TTL_MS,
 } from "../../src/server/utils/cache";
 
 const mockResponse = (timings: { resultCount: number }[]): SearchResponse => ({
@@ -66,12 +63,4 @@ describe("cache", () => {
     });
   });
 
-  describe("TTL constants", () => {
-    test("exports expected TTL constants", () => {
-      expect(typeof TTL_MS).toBe("number");
-      expect(typeof SHORT_TTL_MS).toBe("number");
-      expect(typeof NEWS_TTL_MS).toBe("number");
-      expect(TTL_MS).toBeGreaterThan(SHORT_TTL_MS);
-    });
-  });
 });

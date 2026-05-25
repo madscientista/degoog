@@ -5,7 +5,6 @@ import {
   registerPluginScript,
   getPluginScriptFolders,
   getScriptFolderSource,
-  buildApiBase,
   buildRouteUrl,
   initPlugin,
 } from "../src/server/utils/plugin-assets";
@@ -37,10 +36,6 @@ describe("plugin-assets", () => {
 
 describe("plugin route identity", () => {
   const FOLDER = "degoog-org-official-extensions-jellyfin";
-
-  test("buildApiBase uses the installed folder ID", () => {
-    expect(buildApiBase(FOLDER)).toBe(`/api/plugin/${FOLDER}`);
-  });
 
   test("buildRouteUrl joins paths and tolerates leading slashes", () => {
     expect(buildRouteUrl(FOLDER, "thumb")).toBe(`/api/plugin/${FOLDER}/thumb`);

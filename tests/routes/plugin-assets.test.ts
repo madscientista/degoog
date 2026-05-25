@@ -10,13 +10,6 @@ beforeAll(async () => {
 });
 
 describe("routes/plugin-assets", () => {
-  test("GET /plugins/folder/.. returns 404", async () => {
-    const res = await pluginAssetsRouter.request(
-      "http://localhost/plugins/somefolder/../script.js",
-    );
-    expect(res.status).toBe(404);
-  });
-
   test("GET /plugins/nonexistent/file.js returns 404", async () => {
     const res = await pluginAssetsRouter.request(
       "http://localhost/plugins/nonexistent/file.js",

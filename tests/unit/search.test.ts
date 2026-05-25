@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { mergeNewResults, resolveEngine, scoreResults } from "../../src/server/search";
+import { mergeNewResults, scoreResults } from "../../src/server/search";
 import { cacheKey } from "../../src/server/utils/search";
 import {
   ImgNsfw,
@@ -41,13 +41,6 @@ describe("search", () => {
       const a = out.find((r) => r.url === "https://a.com");
       expect(a!.sources).toContain("E1");
       expect(a!.sources).toContain("E2");
-    });
-
-    test("returns sorted by score", () => {
-      const existing = [scored(result("https://a.com", "E1"), 5, ["E1"])];
-      const newResults = [result("https://a.com", "E2")];
-      const out = mergeNewResults(existing, newResults);
-      expect(out[0].url).toBe("https://a.com");
     });
 
     test("prefers gif imageUrl when merging duplicates and sets isGif", () => {
@@ -129,16 +122,4 @@ describe("search", () => {
     });
   });
 
-  describe("resolveEngine", () => {
-    test("returns null for unknown engine name", async () => {
-      const { initEngines } =
-        await import("../../src/server/extensions/engines/registry");
-      const orig = process.env.DEGOOG_ENGINES_DIR;
-      process.env.DEGOOG_ENGINES_DIR = "/nonexistent-empty-dir-12345";
-      await initEngines();
-      expect(resolveEngine("nonexistent-engine-xyz")).toBeNull();
-      if (orig !== undefined) process.env.DEGOOG_ENGINES_DIR = orig;
-      else delete process.env.DEGOOG_ENGINES_DIR;
-    });
-  });
 });

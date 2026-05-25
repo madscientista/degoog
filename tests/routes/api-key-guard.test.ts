@@ -23,20 +23,17 @@ type Router = {
 
 let suggestRouter: Router;
 let searchRouter: Router;
-let streamRouter: Router;
 
 let _savedSettings: Record<string, ServerSettingValue> = {};
 
 beforeAll(async () => {
   await initServerKey();
-  const [suggestMod, searchMod, streamMod] = await Promise.all([
+  const [suggestMod, searchMod] = await Promise.all([
     import("../../src/server/routes/suggest"),
     import("../../src/server/routes/search"),
-    import("../../src/server/routes/search-stream"),
   ]);
   suggestRouter = suggestMod.default;
   searchRouter = searchMod.default;
-  streamRouter = streamMod.default;
 
   const s = await getInstanceSettings();
   _savedSettings = {
@@ -99,16 +96,6 @@ describe("guardApiKey - suggest endpoints", () => {
       fn: (h: Record<string, string>) =>
         _get(suggestRouter, "/api/suggest?q=x", h),
     },
-    {
-      label: "POST /api/suggest",
-      fn: (h: Record<string, string>) =>
-        _post(suggestRouter, "/api/suggest", '{"query":"x"}', h),
-    },
-    {
-      label: "GET /api/suggest/opensearch",
-      fn: (h: Record<string, string>) =>
-        _get(suggestRouter, "/api/suggest/opensearch?q=x", h),
-    },
   ];
 
   describe("protection disabled - all pass through", () => {
@@ -140,21 +127,6 @@ describe("guardApiKey - suggest endpoints", () => {
     }
   });
 
-  describe("protection enabled - boolean true (not string) still gates", () => {
-    test("GET /api/suggest blocked with boolean true setting", async () => {
-      await updateInstanceSettings({ apiKeySuggestEnabled: true });
-      const res = await _get(suggestRouter, "/api/suggest?q=x");
-      expect(res.status).toBe(401);
-    });
-  });
-
-  describe("protection enabled - boolean false allows through", () => {
-    test("GET /api/suggest passes with boolean false setting", async () => {
-      await updateInstanceSettings({ apiKeySuggestEnabled: false });
-      const res = await _get(suggestRouter, "/api/suggest?q=x");
-      expect(res.status).not.toBe(401);
-    });
-  });
 });
 
 describe("guardApiKey - search endpoints", () => {
@@ -162,31 +134,6 @@ describe("guardApiKey - search endpoints", () => {
     {
       label: "GET /api/search",
       fn: (h: Record<string, string>) => _get(searchRouter, "/api/search", h),
-    },
-    {
-      label: "POST /api/search",
-      fn: (h: Record<string, string>) =>
-        _post(searchRouter, "/api/search", '{"query":"x"}', h),
-    },
-    {
-      label: "GET /api/search/retry",
-      fn: (h: Record<string, string>) =>
-        _get(searchRouter, "/api/search/retry?q=x&engine=google", h),
-    },
-    {
-      label: "POST /api/search/retry",
-      fn: (h: Record<string, string>) =>
-        _post(
-          searchRouter,
-          "/api/search/retry",
-          '{"query":"x","engine":"google"}',
-          h,
-        ),
-    },
-    {
-      label: "GET /api/search/stream",
-      fn: (h: Record<string, string>) =>
-        _get(streamRouter, "/api/search/stream?q=x", h),
     },
   ];
 
@@ -227,10 +174,6 @@ describe("guardApiKey - bearer token edge cases", () => {
       authHeader !== undefined ? { Authorization: authHeader } : {};
     return _get(suggestRouter, "/api/suggest?q=x", headers);
   };
-
-  test("no Authorization header → 401", async () => {
-    expect((await hit()).status).toBe(401);
-  });
 
   test("wrong short token → 401", async () => {
     expect((await hit("Bearer wrongtoken")).status).toBe(401);

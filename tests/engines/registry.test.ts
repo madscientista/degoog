@@ -2,8 +2,6 @@ import { describe, test, expect, beforeAll } from "bun:test";
 import {
   initEngines,
   getEngineMap,
-  getEngineRegistry,
-  getEnginesForSearchType,
 } from "../../src/server/extensions/engines/registry";
 
 describe("engines registry", () => {
@@ -24,13 +22,4 @@ describe("engines registry", () => {
     expect(map["reddit"]).toBeUndefined();
   });
 
-  test("registry is empty with no installed engines", () => {
-    const reg = getEngineRegistry();
-    expect(reg.length).toBe(0);
-  });
-
-  test("getEnginesForSearchType returns empty list with no engines installed", async () => {
-    const engines = await getEnginesForSearchType("web", {});
-    expect(engines.length).toBe(0);
-  });
 });

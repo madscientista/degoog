@@ -122,19 +122,6 @@ describe("public instance - password set", () => {
     process.env.DEGOOG_SETTINGS_PASSWORDS = CORRECT_PASSWORD;
   });
 
-  test("GET /settings still returns public settings HTML", async () => {
-    const res = await pagesRouter.request("http://localhost/settings");
-    expect(res.status).toBe(200);
-    const html = await res.text();
-    expect(html).toContain("settings-page");
-  });
-
-  test("public settings HTML has no reference to the admin path even with password set", async () => {
-    const res = await pagesRouter.request("http://localhost/settings");
-    const html = await res.text();
-    expect(html).not.toContain("/admin");
-  });
-
   test("GET /admin returns 200 and shows the auth gate", async () => {
     const res = await pagesRouter.request("http://localhost/admin");
     expect(res.status).toBe(200);

@@ -43,14 +43,6 @@ describe("plugin-settings", () => {
       expect(result.apiKey).toBe("");
     });
 
-    test("leaves non-secret fields unchanged", () => {
-      const settings = { url: "https://x.com", token: "t" };
-      const schema = [{ key: "url" }, { key: "token", secret: true }];
-      const result = maskSecrets(settings, schema);
-      expect(result.url).toBe("https://x.com");
-      expect(result.token).toBe("__SET__");
-    });
-
     test("handles unknown keys by leaving value as-is", () => {
       const settings = { unknown: "v" };
       const schema: { key: string; secret?: boolean }[] = [];

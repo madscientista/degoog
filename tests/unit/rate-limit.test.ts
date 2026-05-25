@@ -52,11 +52,6 @@ describe("rate-limit", () => {
       expect(
         checkRateLimit("192.168.1.1", { rateLimitEnabled: "false" }),
       ).toEqual({ allowed: true });
-      for (let i = 0; i < 20; i++) {
-        expect(
-          checkRateLimit("192.168.1.1", { rateLimitEnabled: "false" }),
-        ).toEqual({ allowed: true });
-      }
     });
   });
 

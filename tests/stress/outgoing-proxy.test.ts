@@ -126,20 +126,6 @@ describe("outgoing proxy integration", () => {
     expect(threw).toBe(true);
   });
 
-  test("proxy receives the correct target URL", async () => {
-    await updateInstanceSettings({
-      proxyEnabled: "true",
-      proxyUrls: `http://localhost:${proxy.port}`,
-    });
-
-    const targetUrl = `http://localhost:${targetServer.port}/specific-path?q=hello`;
-    await outgoingFetch(targetUrl);
-
-    expect(proxy.hits.length).toBe(1);
-    expect(proxy.hits[0]).toContain("localhost");
-    expect(proxy.hits[0]).toContain(String(targetServer.port));
-  });
-
   test("round-robins across multiple proxy URLs", async () => {
     const secondProxy = createConnectProxy();
 

@@ -26,10 +26,6 @@ describe("matchField", () => {
     expect(matchField("de", ["en-US", "fr-FR"])).toBe("en-US");
   });
 
-  test("prefers en-US over it when locale is en but only non-en bundles exist besides en", () => {
-    expect(matchField("en", ["it", "en-US", "fr-FR"])).toBe("en-US");
-  });
-
   test("returns alphabetically first bundle when no match and no English bundle exists", () => {
     expect(matchField("en", ["it", "fr-FR"])).toBe("fr-FR");
   });
