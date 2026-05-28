@@ -58,6 +58,12 @@ const GENERAL_ALLOWED_KEYS = [
   "degoogIndexerEnabled",
   "degoogIndexerPublicExport",
   "degoogIndexerAcceptIncoming",
+  "degoogIndexerMaxPerSearch",
+  "degoogIndexerMaxUrls",
+  "degoogIndexerMaxHits",
+  "degoogIndexerPruneEnabled",
+  "degoogIndexerFuzzyEnabled",
+  "degoogIndexerQueryLimit",
 ] as const;
 
 const BOOLEAN_SETTING_KEYS = new Set<(typeof GENERAL_ALLOWED_KEYS)[number]>([
@@ -82,6 +88,8 @@ const BOOLEAN_SETTING_KEYS = new Set<(typeof GENERAL_ALLOWED_KEYS)[number]>([
   "degoogIndexerEnabled",
   "degoogIndexerPublicExport",
   "degoogIndexerAcceptIncoming",
+  "degoogIndexerPruneEnabled",
+  "degoogIndexerFuzzyEnabled",
 ]);
 
 const _normalizeHostname = (raw: string): string =>

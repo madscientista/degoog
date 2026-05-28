@@ -78,7 +78,7 @@ export async function handleSearch(params: SearchParams) {
         !(r.sources ?? []).includes(DEGOOG_ENGINE_NAME),
     );
     if (toIndex.length > 0) {
-      queueMicrotask(() => recordResults(query, type, toIndex));
+      queueMicrotask(() => void recordResults(query, type, toIndex));
     }
   }
 

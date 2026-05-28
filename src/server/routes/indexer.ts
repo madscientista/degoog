@@ -7,8 +7,8 @@ import {
   clearAll,
   getStats,
   mergeImport,
+  readRowsFromAttachedDb,
   sampleRows,
-  type ExportRow,
   type MergeReport,
 } from "../indexer/store";
 import { checkpointWal } from "../indexer/db";
@@ -75,7 +75,11 @@ router.get("/api/indexer/stats", async (c) => {
     if (denied) return denied;
   }
 
-  return c.json(getStats());
+  const stats = getStats();
+  return c.json({
+    ...stats,
+    totalResults: stats.totalHits,
+  });
 });
 
 router.get("/api/indexer/sample", async (c) => {
@@ -225,14 +229,7 @@ router.post("/api/indexer/receive", async (c) => {
     await writeFile(tempPath, buf);
 
     attachedDb = new Database(tempPath, { readonly: true });
-    const rows = attachedDb
-      .prepare(
-        `SELECT query_norm, engine_type, url, url_norm, source_engine,
-                title, snippet, thumbnail, image_url, is_gif, duration,
-                extras_json, first_seen, last_seen, source_instance
-         FROM results`,
-      )
-      .all() as ExportRow[];
+    const rows = readRowsFromAttachedDb(attachedDb);
 
     const sourceLabel =
       c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "incoming";

@@ -5,6 +5,8 @@ const TOKEN_KEY = "degoog-settings-token";
 
 interface IndexerStats {
   totalResults: number;
+  totalHits?: number;
+  totalUrls?: number;
   totalQueries: number;
   byType: Record<string, number>;
   dbSizeBytes: number;
@@ -100,10 +102,69 @@ const renderShell = (container: HTMLElement): void => {
           <p class="settings-desc">${tr("accept-incoming-desc")}</p>
         </fieldset>
 
+        <fieldset
+          id="indexer-storage-wrap"
+          class="settings-fieldset settings-fieldset-inverse settings-fieldset--compact degoog-indexer-stats"
+          hidden
+        >
+          <p class="settings-rate-limit-defaults">${tr("storage-heading")}</p>
+          <label class="settings-proxy-urls-label" for="indexer-max-per-search">${tr("max-per-search")}</label>
+          <input
+            type="number"
+            id="indexer-max-per-search"
+            class="settings-rate-limit-input degoog-input"
+            min="0"
+            max="500"
+            step="1"
+          />
+          <p class="settings-desc">${tr("max-per-search-desc")}</p>
+          <label class="settings-proxy-urls-label" for="indexer-max-urls">${tr("max-urls")}</label>
+          <input
+            type="number"
+            id="indexer-max-urls"
+            class="settings-rate-limit-input degoog-input"
+            min="0"
+            step="1"
+          />
+          <p class="settings-desc">${tr("max-urls-desc")}</p>
+          <label class="settings-proxy-urls-label" for="indexer-max-hits">${tr("max-hits")}</label>
+          <input
+            type="number"
+            id="indexer-max-hits"
+            class="settings-rate-limit-input degoog-input"
+            min="0"
+            step="1"
+          />
+          <p class="settings-desc">${tr("max-hits-desc")}</p>
+          <label class="settings-toggle-wrap degoog-toggle-wrap">
+            <input type="checkbox" id="indexer-prune-enabled" class="settings-toggle" />
+            <span class="toggle-slider degoog-toggle"></span>
+            <span class="settings-toggle-label">${tr("prune-enabled")}</span>
+          </label>
+          <p class="settings-desc">${tr("prune-enabled-desc")}</p>
+          <label class="settings-toggle-wrap degoog-toggle-wrap">
+            <input type="checkbox" id="indexer-fuzzy-enabled" class="settings-toggle" />
+            <span class="toggle-slider degoog-toggle"></span>
+            <span class="settings-toggle-label">${tr("fuzzy-enabled")}</span>
+          </label>
+          <p class="settings-desc">${tr("fuzzy-enabled-desc")}</p>
+          <label class="settings-proxy-urls-label" for="indexer-query-limit">${tr("query-limit")}</label>
+          <input
+            type="number"
+            id="indexer-query-limit"
+            class="settings-rate-limit-input degoog-input"
+            min="1"
+            max="100"
+            step="1"
+          />
+          <p class="settings-desc">${tr("query-limit-desc")}</p>
+        </fieldset>
+
         <div id="indexer-stats-wrap" class="degoog-indexer-stats" hidden>
           <p class="settings-rate-limit-defaults">${tr("stats-heading")}</p>
           <dl class="degoog-stat-grid">
-            <div><dt>${tr("total-results")}</dt><dd id="indexer-stat-total">0</dd></div>
+            <div><dt>${tr("total-hits")}</dt><dd id="indexer-stat-hits">0</dd></div>
+            <div><dt>${tr("total-urls")}</dt><dd id="indexer-stat-urls">0</dd></div>
             <div><dt>${tr("total-queries")}</dt><dd id="indexer-stat-queries">0</dd></div>
             <div><dt>${tr("db-size")}</dt><dd id="indexer-stat-size">0 B</dd></div>
           </dl>
@@ -167,10 +228,13 @@ const fetchStats = async (): Promise<IndexerStats | null> => {
 };
 
 const renderStats = (stats: IndexerStats): void => {
-  const totalEl = document.getElementById("indexer-stat-total");
+  const hitsEl = document.getElementById("indexer-stat-hits");
+  const urlsEl = document.getElementById("indexer-stat-urls");
   const queriesEl = document.getElementById("indexer-stat-queries");
   const sizeEl = document.getElementById("indexer-stat-size");
-  if (totalEl) totalEl.textContent = String(stats.totalResults);
+  const hits = stats.totalHits ?? stats.totalResults;
+  if (hitsEl) hitsEl.textContent = String(hits);
+  if (urlsEl) urlsEl.textContent = String(stats.totalUrls ?? 0);
   if (queriesEl) queriesEl.textContent = String(stats.totalQueries);
   if (sizeEl) sizeEl.textContent = formatBytes(stats.dbSizeBytes);
 
@@ -189,16 +253,27 @@ const renderStats = (stats: IndexerStats): void => {
   }
 };
 
-const persistToggles = async (
-  publicExport: boolean,
-  acceptIncoming: boolean,
-): Promise<void> => {
+const persistIndexerSettings = async (): Promise<void> => {
+  const publicEl = document.getElementById("indexer-public-export") as HTMLInputElement | null;
+  const incomingEl = document.getElementById("indexer-accept-incoming") as HTMLInputElement | null;
+  const pruneEl = document.getElementById("indexer-prune-enabled") as HTMLInputElement | null;
+  const fuzzyEl = document.getElementById("indexer-fuzzy-enabled") as HTMLInputElement | null;
+  const maxPerSearch = document.getElementById("indexer-max-per-search") as HTMLInputElement | null;
+  const maxUrls = document.getElementById("indexer-max-urls") as HTMLInputElement | null;
+  const maxHits = document.getElementById("indexer-max-hits") as HTMLInputElement | null;
+  const queryLimit = document.getElementById("indexer-query-limit") as HTMLInputElement | null;
   await fetch(`${getBase()}/api/settings/general`, {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
-      degoogIndexerPublicExport: String(publicExport),
-      degoogIndexerAcceptIncoming: String(acceptIncoming),
+      degoogIndexerPublicExport: String(publicEl?.checked ?? false),
+      degoogIndexerAcceptIncoming: String(incomingEl?.checked ?? false),
+      degoogIndexerMaxPerSearch: maxPerSearch?.value ?? "30",
+      degoogIndexerMaxUrls: maxUrls?.value ?? "0",
+      degoogIndexerMaxHits: maxHits?.value ?? "0",
+      degoogIndexerPruneEnabled: String(pruneEl?.checked ?? true),
+      degoogIndexerFuzzyEnabled: String(fuzzyEl?.checked ?? true),
+      degoogIndexerQueryLimit: queryLimit?.value ?? "30",
     }),
   });
 };
@@ -274,34 +349,72 @@ const wireToggles = async (
   const incomingEl = document.getElementById("indexer-accept-incoming") as HTMLInputElement | null;
   const publicWrap = document.getElementById("indexer-public-wrap");
   const incomingWrap = document.getElementById("indexer-incoming-wrap");
+  const storageWrap = document.getElementById("indexer-storage-wrap");
   const statsWrap = document.getElementById("indexer-stats-wrap");
   const disabledNote = document.getElementById("indexer-disabled-note");
+  const pruneEl = document.getElementById("indexer-prune-enabled") as HTMLInputElement | null;
+  const fuzzyEl = document.getElementById("indexer-fuzzy-enabled") as HTMLInputElement | null;
+  const maxPerSearchEl = document.getElementById("indexer-max-per-search") as HTMLInputElement | null;
+  const maxUrlsEl = document.getElementById("indexer-max-urls") as HTMLInputElement | null;
+  const maxHitsEl = document.getElementById("indexer-max-hits") as HTMLInputElement | null;
+  const queryLimitEl = document.getElementById("indexer-query-limit") as HTMLInputElement | null;
+
+  const str = (key: string, fallback: string): string => {
+    const v = settings[key];
+    return typeof v === "string" ? v : typeof v === "number" ? String(v) : fallback;
+  };
+  const bool = (key: string, fallback: boolean): boolean => {
+    const v = settings[key];
+    if (v === true || v === "true") return true;
+    if (v === false || v === "false") return false;
+    return fallback;
+  };
 
   const applyVisibility = (isEnabled: boolean): void => {
     setIndexerNavVisible(isEnabled);
+    if (storageWrap) storageWrap.hidden = !isEnabled;
     if (statsWrap) statsWrap.hidden = !isEnabled;
     if (disabledNote) disabledNote.hidden = isEnabled;
-    for (const wrap of [publicWrap, incomingWrap]) {
+    for (const wrap of [publicWrap, incomingWrap, storageWrap]) {
       wrap?.classList.toggle("degoog-fieldset--disabled", !isEnabled);
     }
-    if (publicEl) publicEl.disabled = !isEnabled;
-    if (incomingEl) incomingEl.disabled = !isEnabled;
+    const disable = !isEnabled;
+    for (const el of [
+      publicEl,
+      incomingEl,
+      pruneEl,
+      fuzzyEl,
+      maxPerSearchEl,
+      maxUrlsEl,
+      maxHitsEl,
+      queryLimitEl,
+    ]) {
+      if (el) el.disabled = disable;
+    }
   };
 
   if (publicEl) publicEl.checked = publicExport;
   if (incomingEl) incomingEl.checked = acceptIncoming;
+  if (pruneEl) pruneEl.checked = bool("degoogIndexerPruneEnabled", true);
+  if (fuzzyEl) fuzzyEl.checked = bool("degoogIndexerFuzzyEnabled", true);
+  if (maxPerSearchEl) maxPerSearchEl.value = str("degoogIndexerMaxPerSearch", "30");
+  if (maxUrlsEl) maxUrlsEl.value = str("degoogIndexerMaxUrls", "0");
+  if (maxHitsEl) maxHitsEl.value = str("degoogIndexerMaxHits", "0");
+  if (queryLimitEl) queryLimitEl.value = str("degoogIndexerQueryLimit", "30");
   applyVisibility(enabled);
   if (enabled) await refreshStats();
 
-  const saveAll = async (): Promise<void> => {
-    await persistToggles(
-      publicEl?.checked ?? false,
-      incomingEl?.checked ?? false,
-    );
+  const saveAll = (): void => {
+    void persistIndexerSettings();
   };
 
   publicEl?.addEventListener("change", saveAll);
   incomingEl?.addEventListener("change", saveAll);
+  pruneEl?.addEventListener("change", saveAll);
+  fuzzyEl?.addEventListener("change", saveAll);
+  for (const el of [maxPerSearchEl, maxUrlsEl, maxHitsEl, queryLimitEl]) {
+    el?.addEventListener("change", saveAll);
+  }
 
   return applyVisibility;
 };

@@ -6,12 +6,10 @@ import { logger } from "../utils/logger";
 let _db: Database | null = null;
 
 const MIGRATIONS = [
-  `CREATE TABLE IF NOT EXISTS results (
+  `CREATE TABLE IF NOT EXISTS urls (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    query_norm TEXT NOT NULL,
-    engine_type TEXT NOT NULL,
+    url_norm TEXT NOT NULL UNIQUE,
     url TEXT NOT NULL,
-    url_norm TEXT NOT NULL,
     source_engine TEXT NOT NULL,
     title TEXT NOT NULL,
     snippet TEXT NOT NULL,
@@ -21,29 +19,38 @@ const MIGRATIONS = [
     duration TEXT,
     extras_json TEXT,
     first_seen INTEGER NOT NULL,
+    last_seen INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS query_hits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    query_norm TEXT NOT NULL,
+    engine_type TEXT NOT NULL,
+    url_id INTEGER NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
+    first_seen INTEGER NOT NULL,
     last_seen INTEGER NOT NULL,
-    source_instance TEXT,
-    UNIQUE(query_norm, engine_type, url_norm)
+    UNIQUE(query_norm, engine_type, url_id)
   )`,
-  `CREATE INDEX IF NOT EXISTS idx_results_query_type ON results(query_norm, engine_type)`,
-  `CREATE INDEX IF NOT EXISTS idx_results_type ON results(engine_type)`,
-  `CREATE VIRTUAL TABLE IF NOT EXISTS results_fts USING fts5(
-    title, snippet, url, query_norm,
-    content='results', content_rowid='id'
+  `CREATE INDEX IF NOT EXISTS idx_hits_query_type ON query_hits(query_norm, engine_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_hits_type ON query_hits(engine_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_hits_last_seen ON query_hits(last_seen)`,
+  `CREATE INDEX IF NOT EXISTS idx_urls_last_seen ON urls(last_seen)`,
+  `CREATE VIRTUAL TABLE IF NOT EXISTS urls_fts USING fts5(
+    title, snippet, url,
+    content='urls', content_rowid='id'
   )`,
-  `CREATE TRIGGER IF NOT EXISTS results_ai AFTER INSERT ON results BEGIN
-    INSERT INTO results_fts(rowid, title, snippet, url, query_norm)
-    VALUES (new.id, new.title, new.snippet, new.url, new.query_norm);
+  `CREATE TRIGGER IF NOT EXISTS urls_ai AFTER INSERT ON urls BEGIN
+    INSERT INTO urls_fts(rowid, title, snippet, url)
+    VALUES (new.id, new.title, new.snippet, new.url);
   END`,
-  `CREATE TRIGGER IF NOT EXISTS results_ad AFTER DELETE ON results BEGIN
-    INSERT INTO results_fts(results_fts, rowid, title, snippet, url, query_norm)
-    VALUES('delete', old.id, old.title, old.snippet, old.url, old.query_norm);
+  `CREATE TRIGGER IF NOT EXISTS urls_ad AFTER DELETE ON urls BEGIN
+    INSERT INTO urls_fts(urls_fts, rowid, title, snippet, url)
+    VALUES('delete', old.id, old.title, old.snippet, old.url);
   END`,
-  `CREATE TRIGGER IF NOT EXISTS results_au AFTER UPDATE ON results BEGIN
-    INSERT INTO results_fts(results_fts, rowid, title, snippet, url, query_norm)
-    VALUES('delete', old.id, old.title, old.snippet, old.url, old.query_norm);
-    INSERT INTO results_fts(rowid, title, snippet, url, query_norm)
-    VALUES (new.id, new.title, new.snippet, new.url, new.query_norm);
+  `CREATE TRIGGER IF NOT EXISTS urls_au AFTER UPDATE ON urls BEGIN
+    INSERT INTO urls_fts(urls_fts, rowid, title, snippet, url)
+    VALUES('delete', old.id, old.title, old.snippet, old.url);
+    INSERT INTO urls_fts(rowid, title, snippet, url)
+    VALUES (new.id, new.title, new.snippet, new.url);
   END`,
 ];
 
@@ -57,10 +64,11 @@ export const getIndexerDb = (): Database => {
   const db = new Database(indexerDbFile(), { create: true });
   db.exec("PRAGMA journal_mode = WAL");
   db.exec("PRAGMA synchronous = NORMAL");
+  db.exec("PRAGMA foreign_keys = ON");
   try {
     _migrate(db);
   } catch (err) {
-    logger.error("indexer", "migration failed", err);
+    logger.error("indexer", "schema init failed", err);
     throw err;
   }
   _db = db;
