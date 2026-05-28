@@ -17,6 +17,7 @@ import {
 import {
   getInterceptorMeta,
   getInterceptorBySettingsId,
+  getInterceptors,
 } from "../extensions/interceptors/registry";
 import { getSearchBarActionExtensionMeta } from "../extensions/search-bar/registry";
 import { getThemeExtensionMeta } from "../extensions/themes/registry";
@@ -67,9 +68,22 @@ async function getSlotExtensionMeta(
       );
       continue;
     }
+    const manifest = slot.pluginManifest;
     const baseSchema = slot.settingsSchema ?? [];
     const hasPositionChoice = (slot.slotPositions?.length ?? 0) > 0;
-    const fullSchema: SettingField[] = [...baseSchema];
+
+    const linkedInterceptorSchema = manifest
+      ? getInterceptors()
+          .filter((i) => i.pluginManifest?.id === manifest.id)
+          .flatMap((i) => i.settingsSchema ?? [])
+      : [];
+
+    const fullSchema: SettingField[] = [
+      ...(manifest?.settingsSchema ?? []),
+      ...baseSchema,
+      ...linkedInterceptorSchema,
+    ];
+
     if (hasPositionChoice) {
       fullSchema.push({
         key: SLOT_POSITION_SETTING_KEY,
@@ -100,8 +114,8 @@ async function getSlotExtensionMeta(
     }
     out.push({
       id,
-      displayName: slot.name,
-      description: slot.description,
+      displayName: manifest?.name ?? slot.name,
+      description: manifest?.description ?? slot.description,
       type: ExtensionStoreType.Plugin,
       configurable: fullSchema.length > 0,
       settingsSchema: fullSchema,

@@ -65,6 +65,14 @@ export interface SettingField {
   visibleWhen?: { key: string; equals: string };
 }
 
+export interface PluginManifest {
+  id: string;
+  name: string;
+  description?: string;
+  settingsSchema?: SettingField[];
+  configure?(settings: Record<string, SettingValue>): void;
+}
+
 export interface ExtensionMeta {
   id: string;
   displayName: string;
@@ -191,6 +199,7 @@ export interface SlotPlugin {
   configure?(settings: Record<string, SettingValue>): void;
   init?(context: PluginContext): void | Promise<void>;
   t?: Translate;
+  pluginManifest?: PluginManifest;
 }
 
 export interface CommandResult {
@@ -346,6 +355,7 @@ export interface QueryInterceptor {
     context?: QueryInterceptorContext,
   ): Promise<InterceptorResult>;
   t?: Translate;
+  pluginManifest?: PluginManifest;
 }
 
 export interface UovadipasquaSearchQueryTrigger {

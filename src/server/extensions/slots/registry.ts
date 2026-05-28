@@ -14,6 +14,7 @@ import {
 import { getSettings, isDisabled } from "../../utils/plugin-settings";
 import { bootCircuitFromPath } from "../../utils/translation-circuit";
 import { createRegistry } from "../registry-factory";
+import { isPluginManifest } from "../plugin-manifest";
 
 const builtinsDir = join(
   process.cwd(),
@@ -57,11 +58,13 @@ const registry = createRegistry<SlotPlugin>({
       mod.slot ??
       mod.slotPlugin ??
       (mod.default as Record<string, unknown>)?.slot;
-    return isSlotPlugin(s) ? s : null;
+    if (!isSlotPlugin(s)) return null;
+    if (isPluginManifest(mod.plugin)) s.pluginManifest = mod.plugin;
+    return s;
   },
   canonicalIdKind: "slot",
   onLoad: async (slot, { entryPath, folderName, source, canonicalId }) => {
-    const id = canonicalId ?? folderName;
+    const id = slot.pluginManifest?.id ?? canonicalId ?? folderName;
     slot.id = id;
     slot.settingsId = id;
     const rawSettings = await getSettings(id);

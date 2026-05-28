@@ -13,6 +13,7 @@ import {
 } from "../../utils/plugin-settings";
 import { createRegistry } from "../registry-factory";
 import { buildExtensionMeta } from "../extension-meta";
+import { isPluginManifest } from "../plugin-manifest";
 
 const SETTINGS_PREFIX = "interceptor-";
 
@@ -30,15 +31,19 @@ const registry = createRegistry<QueryInterceptor>({
     const i =
       mod.interceptor ??
       (mod.default as Record<string, unknown>)?.interceptor;
-    return isInterceptor(i) ? i : null;
+    if (!isInterceptor(i)) return null;
+    if (isPluginManifest(mod.plugin)) i.pluginManifest = mod.plugin;
+    return i;
   },
   onLoad: async (interceptor, { entryPath, folderName }) => {
-    const settingsId = `${SETTINGS_PREFIX}${folderName}`;
+    const settingsId = interceptor.pluginManifest?.id ?? `${SETTINGS_PREFIX}${folderName}`;
     interceptor.settingsId = settingsId;
     const rawSettings = await getSettings(settingsId);
     const p = parseInt(asString(rawSettings["priority"]) || "0", 10);
     interceptor.priority = isNaN(p) ? 0 : p;
-    lockinNameSpace(folderName, `interceptors/${settingsId}`);
+    if (!interceptor.pluginManifest) {
+      lockinNameSpace(folderName, `interceptors/${settingsId}`);
+    }
     lockinSettingsId(folderName, settingsId);
     if (!(await isDisabled(settingsId))) {
       const template = await loadPluginAssets(
@@ -68,6 +73,7 @@ export const getInterceptorBySettingsId = (id: string): QueryInterceptor | null 
 export const getInterceptorMeta = async (): Promise<ExtensionMeta[]> => {
   const out: ExtensionMeta[] = [];
   for (const interceptor of registry.items()) {
+    if (interceptor.pluginManifest) continue;
     const settingsId = interceptor.settingsId;
     if (!settingsId) continue;
     const schema: SettingField[] = interceptor.settingsSchema ?? [];
