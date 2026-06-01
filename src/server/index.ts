@@ -1,6 +1,5 @@
 import { Hono } from "hono";
-import { serveStatic } from "hono/bun";
-import { createBunWebSocket } from "hono/bun";
+import { serveStatic, createBunWebSocket } from "hono/bun";
 import { trimTrailingSlash } from "hono/trailing-slash";
 import pkg from "../../package.json";
 import { getBasePath } from "./utils/base-url";
@@ -140,10 +139,12 @@ Promise.all([initServerKey(), initExtensionRegistries()])
 
     const { upgradeWebSocket, websocket } = createBunWebSocket();
 
-    for (const [name, handlers] of getTransportWsHandlers()) {
+    for (const [name] of getTransportWsHandlers()) {
       app.get(`/ws/${name}/:password?`, upgradeWebSocket((c) => {
+        const transportName = name;
         const passwordPath = `/${c.req.param("password") ?? ""}`;
-        if (handlers.onUpgrade?.(passwordPath) === false) {
+        const handlers = getTransportWsHandlers().get(transportName);
+        if (handlers?.onUpgrade?.(passwordPath) === false) {
           return {
             onOpen(_evt, ws) { ws.close(1008, "unauthorized"); },
             onMessage() {},
@@ -151,11 +152,16 @@ Promise.all([initServerKey(), initExtensionRegistries()])
           };
         }
         return {
-          onOpen(_evt, ws) { handlers.onOpen(ws); },
-          onMessage(evt, ws) {
-            handlers.onMessage(ws, typeof evt.data === "string" ? evt.data : String(evt.data));
+          onOpen(_evt, ws) {
+            getTransportWsHandlers().get(transportName)?.onOpen(ws);
           },
-          onClose(_evt, ws) { handlers.onClose(ws); },
+          onMessage(evt, ws) {
+            const raw = typeof evt.data === "string" ? evt.data : String(evt.data);
+            getTransportWsHandlers().get(transportName)?.onMessage(ws, raw);
+          },
+          onClose(_evt, ws) {
+            getTransportWsHandlers().get(transportName)?.onClose(ws);
+          },
         };
       }));
     }

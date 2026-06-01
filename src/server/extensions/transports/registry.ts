@@ -9,6 +9,7 @@ import { createRegistry } from "../registry-factory";
 import { registerExtensionFolder } from "../../utils/extension-docs";
 import { buildExtensionMeta } from "../extension-meta";
 import { mountTransportWs } from "./ws-registry";
+import { getTransportWsSession } from "./ws-session";
 
 const _builtins: Transport[] = [
   new FetchTransport(),
@@ -52,6 +53,12 @@ const registry = createRegistry<Transport>({
       if (Object.keys(stored).length > 0) instance.configure(stored);
     }
     if (instance.wsHandler) {
+      const bindWsSession = (
+        instance as Transport & {
+          bindWsSession?: (session: ReturnType<typeof getTransportWsSession>) => void;
+        }
+      ).bindWsSession;
+      if (bindWsSession) bindWsSession.call(instance, getTransportWsSession(name));
       mountTransportWs(name, instance.wsHandler);
     }
   },

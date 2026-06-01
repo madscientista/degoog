@@ -1,5 +1,8 @@
 export const stripHtml = (text: string): string =>
-  text.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  text
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const _CSS_BLOCK_RE =
   /(?:[.#][\w-]+\s*\{[^{}]*\}|@[^{]+\{(?:[^{}]|\{[^{}]*\})*\})\s*/g;
@@ -12,7 +15,7 @@ const _DATE_PREFIX =
 
 export const stripSnippetPrefix = (text: string): string => {
   const stripped = text.replace(
-    new RegExp(`^(?:${_DATE_PREFIX.source})\\s*[-–—·]\\s*`, "i"),
+    new RegExp(`^(?:${_DATE_PREFIX.source})\\s*[-–-·]\\s*`, "i"),
     "",
   );
   return stripped || text;
@@ -20,7 +23,7 @@ export const stripSnippetPrefix = (text: string): string => {
 
 export const looksLikeProse = (text: string): boolean => {
   if (/\{[^}]{0,500}\}/.test(text)) return false;
-  const specialChars = (text.match(/[^a-zA-Z0-9\s.,!?'"()\-–—]/g) ?? []).length;
+  const specialChars = (text.match(/[^a-zA-Z0-9\s.,!?'"()\-–-]/g) ?? []).length;
   const words = text.split(/\s+/).filter(Boolean);
-  return specialChars / text.length < 0.10 && words.length >= 8;
+  return specialChars / text.length < 0.1 && words.length >= 8;
 };

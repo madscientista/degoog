@@ -1,5 +1,8 @@
 import { Context } from "hono";
-import { listEngineIds } from "../extensions/engines/registry";
+import {
+  getDefaultEngineConfig,
+  listEngineIds,
+} from "../extensions/engines/registry";
 import { getSlotPlugins } from "../extensions/slots/registry";
 import {
   EngineConfig,
@@ -131,9 +134,11 @@ export const _applyRateLimit = async (c: Context): Promise<Response | null> => {
 };
 
 export function parseEngineConfig(query: URLSearchParams): EngineConfig {
+  const defaults = getDefaultEngineConfig();
   const config: EngineConfig = {};
   for (const id of listEngineIds()) {
-    config[id] = query.get(id) !== "false";
+    const raw = query.get(id);
+    config[id] = raw === null ? !!defaults[id] : raw !== "false";
   }
   return config;
 }

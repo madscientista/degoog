@@ -1,5 +1,8 @@
 import type { Context } from "hono";
-import { listEngineIds } from "../../extensions/engines/registry";
+import {
+  getDefaultEngineConfig,
+  listEngineIds,
+} from "../../extensions/engines/registry";
 import type { EngineConfig, ImageFilter, ImgColor, ImgLayout, ImgNsfw, ImgSize, ImgType, SearchParams, SearchType, TimeFilter } from "../../types";
 import { parseEngineConfig } from "../../utils/search";
 
@@ -8,10 +11,11 @@ export function parsePage(raw: unknown): number {
 }
 
 export function parseEnginesFromBody(enabledList?: string[]): EngineConfig {
-  const enabledSet = enabledList ? new Set(enabledList) : null;
+  if (!enabledList) return getDefaultEngineConfig();
+  const enabledSet = new Set(enabledList);
   const engines: EngineConfig = {};
   for (const id of listEngineIds()) {
-    engines[id] = enabledSet ? enabledSet.has(id) : true;
+    engines[id] = enabledSet.has(id);
   }
   return engines;
 }

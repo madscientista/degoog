@@ -219,6 +219,7 @@ export async function initEnginesTab(
             headers,
             body: JSON.stringify(enabledMap),
           });
+          await idbSet(SETTINGS_KEY, enabledMap);
           if (btn) {
             const prev = btn.textContent;
             btn.textContent = t("settings-page.server.saved");
