@@ -198,8 +198,7 @@ async function installDependencies(dependencies: string[]): Promise<void> {
 }
 
 const ENGINE_TYPE_STRING_RE = /export\s+const\s+type\s*=\s*["']([^"']+)["']/;
-const ENGINE_TYPE_ARRAY_RE =
-  /export\s+const\s+type\s*=\s*\[([^\]]+)\]/;
+const ENGINE_TYPE_ARRAY_RE = /export\s+const\s+type\s*=\s*\[([^\]]+)\]/;
 const engineTypesCache = new Map<string, string[] | null>();
 
 const parseEngineTypesFromSource = (src: string): string[] | null => {
@@ -225,8 +224,10 @@ const readEngineTypes = async (dir: string): Promise<string[] | null> => {
       const src = await readFile(join(dir, file), "utf-8");
       result = parseEngineTypesFromSource(src);
       if (result) break;
-    } catch (err) {
-      logger.debug("store:item", `engine type file ${file} read failed in ${dir}`, err);
+    } catch {
+      // I'm leaving an empty catch here to avoid log spam, this is an expected error as we are optimistically checking for an index file of some sort.
+      // It was showing an annoying `DEBUG [store:item] engine type file index.ts read failed in /app/data/store/degoog-org-official-extensions/engines/google`
+      // over and over and there's absolutely no need for it.
       continue;
     }
   }
@@ -259,7 +260,11 @@ export async function listRepoItems(repoUrl?: string): Promise<StoreItem[]> {
       const raw = await readFile(join(repoPath, "package.json"), "utf-8");
       pkg = JSON.parse(raw) as RepoPackageJson;
     } catch (err) {
-      logger.warn("store:item", `package.json read failed for ${repo.localPath}`, err);
+      logger.warn(
+        "store:item",
+        `package.json read failed for ${repo.localPath}`,
+        err,
+      );
       continue;
     }
     const topAuthor =
@@ -519,7 +524,9 @@ async function _updateItem(
   const siblings = await readdir(destBase).catch(() => [] as string[]);
   for (const entry of siblings) {
     if (entry.toLowerCase() === lowerTarget) {
-      await rm(join(destBase, entry), { recursive: true, force: true }).catch(() => {});
+      await rm(join(destBase, entry), { recursive: true, force: true }).catch(
+        () => {},
+      );
     }
   }
   await copyItemDir(srcDir, destDir, STORE_METADATA);

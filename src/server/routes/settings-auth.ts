@@ -130,11 +130,6 @@ export async function gandalf(token: string | undefined): Promise<boolean> {
     logger.debug("settings-auth", "token validation failed: token expired");
     return false;
   }
-  const ttlMs = expiresAt - Date.now();
-  logger.debug(
-    "settings-auth",
-    `token valid (expires in ${Math.round(ttlMs / 1000 / 60)}m)`,
-  );
   return true;
 }
 

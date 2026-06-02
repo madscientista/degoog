@@ -138,6 +138,10 @@
   overflow: hidden;
   width: 30rem;
 
+  &--wide {
+    width: min(60rem, 92vw);
+  }
+
   &-overlay {
     position: fixed;
     inset: 0;
@@ -184,10 +188,6 @@
     color: var(--text-secondary);
     font-size: $font-size-small;
   }
-}
-
-.ext-docs-modal {
-  width: min(60rem, 92vw);
 }
 
 .ext-docs-body {

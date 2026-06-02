@@ -85,7 +85,9 @@ const fetchRef = async (
   if (exit === 0) return { ok: true, notFound: false, error: "" };
   const stderr = await new Response(proc.stderr).text();
   const notFound =
-    /couldn't find remote ref|remote ref does not exist|invalid refspec/i.test(stderr);
+    /couldn't find remote ref|remote ref does not exist|invalid refspec/i.test(
+      stderr,
+    );
   return {
     ok: false,
     notFound,
@@ -129,7 +131,7 @@ const syncBranch = async (repoPath: string): Promise<void> => {
     const result = await switchBranch(repoPath, BETA_BRANCH);
     if (!result.ok) {
       if (result.notFound) {
-        logger.info(
+        logger.debug(
           "store:branch",
           `repo has no "${BETA_BRANCH}" branch, staying on "${current}" - normal for third-party repos`,
         );

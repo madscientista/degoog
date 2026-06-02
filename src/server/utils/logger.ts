@@ -29,12 +29,16 @@ const fmt = (namespace: string, ...args: unknown[]) =>
 const PATTERN_MAX_PERIOD = 4;
 const IS_TTY = process.stdout.isTTY === true;
 
+type Writer = (suffix?: string) => void;
 type ScanState = { mode: "scanning"; buf: string[] };
 type CycleState = { mode: "repeating"; pattern: string[]; pos: number; cycles: number };
 type LogState = ScanState | CycleState;
 
 let _logState: LogState = { mode: "scanning", buf: [] };
 let _cycleLineActive = false;
+
+type Buffered = { write: Writer; key: string; count: number };
+let _nonTtyBuf: Buffered | null = null;
 
 const msgKey = (level: string, namespace: string, args: unknown[]): string => {
   try {
@@ -56,7 +60,7 @@ const tryCycle = (buf: string[]): string[] | null => {
 
 const printCycleCount = (cycles: number, period: number) => {
   const suffix = period > 1 ? ` (${period}-line cycle)` : "";
-  if (IS_TTY && _cycleLineActive) {
+  if (_cycleLineActive) {
     process.stdout.write(`\x1b[1A\r\x1b[2K${color("\x1b[90m")}  ↑ x${cycles}${suffix}${RESET}\n`);
   } else {
     process.stdout.write(`${color("\x1b[90m")}  ↑ x${cycles}${suffix}${RESET}\n`);
@@ -64,7 +68,42 @@ const printCycleCount = (cycles: number, period: number) => {
   }
 };
 
-const emit = (key: string, write: () => void) => {
+const withSuffix = (parts: unknown[], suffix: string): unknown[] => {
+  const idx = parts.reduceRight(
+    (found, p, i) => (found === -1 && typeof p === "string" ? i : found),
+    -1,
+  );
+  if (idx === -1) return [...parts, suffix];
+  return parts.map((p, i) => (i === idx ? `${p}${suffix}` : p));
+};
+
+const buildWriter = (level: string, namespace: string, args: unknown[]): Writer =>
+  (suffix?: string) => {
+    const parts = fmt(namespace, ...args);
+    const printParts = suffix ? withSuffix(parts, suffix) : parts;
+    CONSOLE_LEVELS[level](
+      `${color(CONSOLE_COLORS[level])}${level.toUpperCase()} [${namespace}]${RESET}`,
+      ...printParts,
+    );
+  };
+
+const flushNonTtyBuf = () => {
+  if (!_nonTtyBuf) return;
+  const { write, count } = _nonTtyBuf;
+  write(count > 1 ? ` x${count}` : undefined);
+  _nonTtyBuf = null;
+};
+
+const emitNonTTY = (key: string, write: Writer) => {
+  if (_nonTtyBuf?.key === key) {
+    _nonTtyBuf.count++;
+    return;
+  }
+  flushNonTtyBuf();
+  _nonTtyBuf = { write, key, count: 1 };
+};
+
+const emitTTY = (key: string, write: Writer) => {
   if (_logState.mode === "repeating") {
     if (key === _logState.pattern[_logState.pos]) {
       _logState.pos = (_logState.pos + 1) % _logState.pattern.length;
@@ -91,17 +130,17 @@ const emit = (key: string, write: () => void) => {
   }
 };
 
+const emit = (key: string, write: Writer) =>
+  IS_TTY ? emitTTY(key, write) : emitNonTTY(key, write);
+
+process.on("exit", flushNonTtyBuf);
+
 export const logger: Record<string, (namespace: string, ...args: unknown[]) => void> = {
   ...LEVELS.reduce(
     (acc, level) => {
       acc[level] = (namespace: string, ...args: unknown[]) => {
         if (LEVELS.indexOf(LOG_LEVEL) < LEVELS.indexOf(level)) return;
-        emit(msgKey(level, namespace, args), () =>
-          CONSOLE_LEVELS[level](
-            `${color(CONSOLE_COLORS[level])}${level.toUpperCase()} [${namespace}]${RESET}`,
-            ...fmt(namespace, ...args),
-          ),
-        );
+        emit(msgKey(level, namespace, args), buildWriter(level, namespace, args));
       };
       return acc;
     },
@@ -109,11 +148,6 @@ export const logger: Record<string, (namespace: string, ...args: unknown[]) => v
   ),
   translation: (namespace: string, ...args: unknown[]) => {
     if (!LOG_TRANSLATION) return;
-    emit(msgKey("translation", namespace, args), () =>
-      console.debug(
-        `${color(CONSOLE_COLORS.translation)}TRANSLATION [${namespace}]${RESET}`,
-        ...fmt(namespace, ...args),
-      ),
-    );
+    emit(msgKey("translation", namespace, args), buildWriter("translation", namespace, args));
   },
 };

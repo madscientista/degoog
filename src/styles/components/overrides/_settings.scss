@@ -709,6 +709,11 @@
   th {
     color: var(--text-secondary);
     font-weight: 500;
+    min-width: 120px;
+
+    &:first-child {
+      min-width: auto;
+    }
   }
 
   td:last-child {
