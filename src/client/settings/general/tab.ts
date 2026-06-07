@@ -7,14 +7,14 @@ import {
   POST_METHOD_ENABLED,
   THEME_KEY,
 } from "../../constants";
+import { restartWizard } from "../../modules/wizard/wizard";
+import type { ToggleOpts } from "../../types/settings-section";
 import { getBase } from "../../utils/base-url";
 import { idbGet, idbSet } from "../../utils/db";
-import { requestInstallPrompt } from "../../utils/install-prompt";
-import { applyTheme } from "../../utils/theme";
-import { restartWizard } from "../../modules/wizard/wizard";
 import { escapeHtml } from "../../utils/dom";
+import { requestInstallPrompt } from "../../utils/install-prompt";
 import { getStoredToken } from "../../utils/settings-token";
-import type { ToggleOpts } from "../../types/settings-section";
+import { applyTheme } from "../../utils/theme";
 import { renderSection, renderToggle } from "../shared/section";
 
 const t = window.scopedT("core");
@@ -268,7 +268,10 @@ async function initVersionChecker(): Promise<void> {
     const newLatest = new Date();
     localStorage.setItem("last-update-check", newLatest.toUTCString());
     if (lastCheckedEl) lastCheckedEl.textContent = newLatest.toLocaleDateString();
-    if (pkg.version !== newest && newAvailableEl) newAvailableEl.removeAttribute("style");
+    if (pkg.version !== newest && newAvailableEl && newest != "Unknown")
+      newAvailableEl.removeAttribute("style");
+    else
+      newAvailableEl?.setAttribute("style","display:none");
   });
 }
 
