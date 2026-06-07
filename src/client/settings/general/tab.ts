@@ -7,14 +7,14 @@ import {
   POST_METHOD_ENABLED,
   THEME_KEY,
 } from "../../constants";
-import { restartWizard } from "../../modules/wizard/wizard";
-import type { ToggleOpts } from "../../types/settings-section";
 import { getBase } from "../../utils/base-url";
 import { idbGet, idbSet } from "../../utils/db";
-import { escapeHtml } from "../../utils/dom";
 import { requestInstallPrompt } from "../../utils/install-prompt";
-import { getStoredToken } from "../../utils/settings-token";
 import { applyTheme } from "../../utils/theme";
+import { restartWizard } from "../../modules/wizard/wizard";
+import { escapeHtml } from "../../utils/dom";
+import { getStoredToken } from "../../utils/settings-token";
+import type { ToggleOpts } from "../../types/settings-section";
 import { renderSection, renderToggle } from "../shared/section";
 
 const t = window.scopedT("core");
