@@ -196,8 +196,8 @@ const engineRegistry = createRegistry<PluginEntry>({
 export const listEngineIds = (): string[] =>
   engineRegistry.items().map((e) => e.id);
 
-export const listEngines = async (): Promise<EngineCatalogEntry[]> =>
-  Promise.all(
+export const listEngines = async (): Promise<EngineCatalogEntry[]> => {
+  const entries = await Promise.all(
     engineRegistry.items().map(async (e) => {
       const searchTypes = await resolveEngineTypes(e);
       return {
@@ -209,6 +209,8 @@ export const listEngines = async (): Promise<EngineCatalogEntry[]> =>
       };
     }),
   );
+  return entries.filter((e) => e.searchTypes.length > 0);
+};
 
 export const getEngineMap = (): Record<string, SearchEngine> =>
   Object.fromEntries(engineRegistry.items().map((e) => [e.id, e.instance]));

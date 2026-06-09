@@ -21,7 +21,8 @@ import { markReady } from "./routes/health";
 import { build404 } from "./routes/pages";
 import { initServerKey } from "./utils/server-key";
 import { initValkey } from "./utils/cache-valkey";
-import { getInstanceId } from "./utils/server-settings";
+import { getInstanceId, getInstanceSettings } from "./utils/server-settings";
+import { asBoolean } from "./utils/plugin-settings";
 import { runMigrations } from "./migrations";
 import { closeAllDbs } from "./indexer/db";
 import { startQueue, stopQueue } from "./indexer/queue";
@@ -131,8 +132,9 @@ process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
 Promise.all([initServerKey(), initExtensionRegistries()])
-  .then(() => {
-    startQueue();
+  .then(async () => {
+    const settings = await getInstanceSettings();
+    if (asBoolean(settings.degoogIndexerEnabled)) startQueue();
 
     const { upgradeWebSocket, websocket } = createBunWebSocket();
 
