@@ -3,6 +3,7 @@ import { serveStatic, createBunWebSocket } from "hono/bun";
 import { trimTrailingSlash } from "hono/trailing-slash";
 import pkg from "../../package.json";
 import { getBasePath } from "./utils/base-url";
+import { getLocale } from "./utils/hono";
 import { initPlugins } from "./extensions/commands/registry";
 import { initUovadipasquas } from "./extensions/uovadipasqua/registry";
 import { initEngines } from "./extensions/engines/registry";
@@ -55,11 +56,7 @@ app.use(
 app.route(BASE_PATH || "/", globalRouter);
 
 app.notFound(async (c) => {
-  const locale = c.req
-    .header("accept-language")
-    ?.split(",")[0]
-    ?.split("-")[0]
-    ?.trim();
+  const locale = getLocale(c);
   return c.html(await build404(locale), 404);
 });
 
