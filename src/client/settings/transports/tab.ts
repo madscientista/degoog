@@ -75,10 +75,13 @@ export function initTransportsTab(allExtensions: AllExtensions): void {
   container
     .querySelectorAll<HTMLInputElement>(".transport-toggle-input")
     .forEach((input) => {
+      let reqToken = 0;
       input.addEventListener("change", async () => {
         const id = input.dataset.id;
         if (!id) return;
+        const prevChecked = !input.checked;
         const disabled = !input.checked;
+        const token = ++reqToken;
         try {
           const res = await fetch(
             `${getBase()}/api/extensions/${encodeURIComponent(id)}/settings`,
@@ -89,11 +92,13 @@ export function initTransportsTab(allExtensions: AllExtensions): void {
             },
           );
           if (!res.ok) throw new Error("save failed");
+          if (token !== reqToken) return;
           window.dispatchEvent(new CustomEvent("extensions-saved"));
           flashSuccess(t("settings-page.server.saved"));
         } catch (err) {
           console.warn("[settings] transport toggle failed", err);
-          input.checked = !input.checked;
+          if (token !== reqToken) return;
+          input.checked = prevChecked;
           flashError(t("settings-page.server.save-failed-network"));
         }
       });

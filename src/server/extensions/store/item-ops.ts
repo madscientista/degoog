@@ -247,6 +247,10 @@ export const parseShortcutMetaFromSource = (
   }
   const kind: ShortcutKind =
     SHORTCUT_KIND_RE.exec(src)?.[1] === "numeric" ? "numeric" : "single";
+  if (kind === "single" && !binding.key) return null;
+  const hasModifier =
+    binding.ctrl || binding.meta || binding.alt || binding.shift;
+  if (kind === "numeric" && !hasModifier) return null;
   return { binding, kind };
 };
 
