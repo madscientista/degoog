@@ -33,6 +33,7 @@ describe("shortcuts registry", () => {
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true });
     delete process.env.DEGOOG_SHORTCUTS_DIR;
+    delete process.env.DEGOOG_PLUGIN_SETTINGS_FILE;
   });
 
   test("loads flat shortcut files with canonical -shortcut ids", () => {
@@ -50,6 +51,7 @@ describe("shortcuts registry", () => {
 
   test("exposes client module urls", async () => {
     const client = await getClientShortcuts();
+    expect(client.length).toBeGreaterThan(0);
     expect(client[0].moduleUrl).toBe("/api/shortcuts/modules/focus-first-shortcut.js");
     const source = await getShortcutModuleSource("focus-first-shortcut");
     expect(source).toContain("Focus first");

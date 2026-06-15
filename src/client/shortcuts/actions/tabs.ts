@@ -1,6 +1,6 @@
 const _visibleTabs = (): HTMLElement[] =>
   Array.from(document.querySelectorAll<HTMLElement>(".results-tab")).filter(
-    (tab) => tab.style.display !== "none",
+    (tab) => window.getComputedStyle(tab).display !== "none",
   );
 
 export const hasTabs = (): boolean => _visibleTabs().length > 0;

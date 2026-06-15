@@ -162,11 +162,11 @@
       "custom-css-label": "CSS personnalisé",
       "saved": "Enregistré",
       "save-failed-network": "Échec de l'enregistrement. Réessayez.",
-      "shortcuts-heading": "Keyboard shortcuts",
-      "shortcuts-desc": "Enable customisable keyboard shortcuts for this instance. When off, the Shortcuts section is hidden and no shortcuts are active.",
-      "shortcuts-enable": "Enable keyboard shortcuts",
-      "shortcuts-enable-aria": "Enable keyboard shortcuts",
-      "shortcuts-enable-desc": "Power-user shortcuts for focusing search, switching tabs, and navigating results. Configure them in the Shortcuts section."
+      "shortcuts-heading": "Raccourcis clavier",
+      "shortcuts-desc": "Activez les raccourcis clavier personnalisables pour cette instance. Lorsqu'ils sont désactivés, la section Raccourcis est masquée et aucun raccourci n'est actif.",
+      "shortcuts-enable": "Activer les raccourcis clavier",
+      "shortcuts-enable-aria": "Activer les raccourcis clavier",
+      "shortcuts-enable-desc": "Raccourcis pour utilisateurs avancés permettant de cibler la recherche, de changer d'onglet et de naviguer dans les résultats. Configurez-les dans la section Raccourcis."
     },
     "proxy-test": {
       "not-enabled": "Le proxy n'est pas activé. Activez-le et enregistrez avant de tester.",
@@ -392,51 +392,51 @@
       }
     },
     "shortcuts": {
-      "heading": "Keyboard shortcuts",
-      "desc": "Click a shortcut to record a new key combination. Press Escape while recording to cancel.",
-      "reset": "Reset to default",
-      "reset-all": "Reset all to defaults",
-      "add": "Add shortcut",
-      "delete": "Delete shortcut",
-      "file-name": "File name",
-      "source": "JavaScript source",
-      "recording": "Press keys...",
+      "heading": "Raccourcis clavier",
+      "desc": "Cliquez sur un raccourci pour enregistrer une nouvelle combinaison de touches. Appuyez sur Échap pendant l'enregistrement pour annuler.",
+      "reset": "Réinitialiser par défaut",
+      "reset-all": "Tout réinitialiser par défaut",
+      "add": "Ajouter un raccourci",
+      "delete": "Supprimer le raccourci",
+      "file-name": "Nom du fichier",
+      "source": "Code source JavaScript",
+      "recording": "Appuyez sur les touches...",
       "actions": {
         "focus-search": {
-          "label": "Focus search",
-          "desc": "Move the cursor into the search box."
+          "label": "Cibler la recherche",
+          "desc": "Place le curseur dans le champ de recherche."
         },
         "next-tab": {
-          "label": "Next tab",
-          "desc": "Switch to the next results tab."
+          "label": "Onglet suivant",
+          "desc": "Passe à l'onglet de résultats suivant."
         },
         "prev-tab": {
-          "label": "Previous tab",
-          "desc": "Switch to the previous results tab."
+          "label": "Onglet précédent",
+          "desc": "Passe à l'onglet de résultats précédent."
         },
         "tab-by-number": {
-          "label": "Switch tab by number",
-          "desc": "Hold the recorded modifier and press 1-9 to jump to that tab."
+          "label": "Changer d'onglet par numéro",
+          "desc": "Maintenez le modificateur enregistré et appuyez sur 1-9 pour accéder à cet onglet."
         },
         "go-home": {
-          "label": "Go to home",
-          "desc": "Return to the Degoog home page."
+          "label": "Aller à l'accueil",
+          "desc": "Retourne à la page d'accueil de Degoog."
         },
         "go-settings": {
-          "label": "Go to settings",
-          "desc": "Open the settings page."
+          "label": "Aller aux paramètres",
+          "desc": "Ouvre la page des paramètres."
         },
         "result-down": {
-          "label": "Highlight next result",
-          "desc": "Move focus to the next result link."
+          "label": "Surligner le résultat suivant",
+          "desc": "Déplace le focus vers le lien du résultat suivant."
         },
         "result-up": {
-          "label": "Highlight previous result",
-          "desc": "Move focus to the previous result link."
+          "label": "Surligner le résultat précédent",
+          "desc": "Déplace le focus vers le lien du résultat précédent."
         },
         "result-open": {
-          "label": "Open highlighted result",
-          "desc": "Open the currently focused result."
+          "label": "Ouvrir le résultat surligné",
+          "desc": "Ouvre le résultat actuellement ciblé."
         }
       }
     }

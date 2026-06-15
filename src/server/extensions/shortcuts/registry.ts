@@ -25,15 +25,23 @@ export interface ShortcutExtension {
   editable?: boolean;
 }
 
-const isBinding = (value: unknown): value is ShortcutBinding =>
-  typeof value === "object" &&
-  value !== null &&
-  !Array.isArray(value) &&
-  ("key" in value ||
-    "ctrl" in value ||
-    "meta" in value ||
-    "alt" in value ||
-    "shift" in value);
+const isBinding = (value: unknown): value is ShortcutBinding => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  if ("key" in record && typeof record.key !== "string") return false;
+  for (const mod of ["ctrl", "meta", "alt", "shift"] as const) {
+    if (mod in record && typeof record[mod] !== "boolean") return false;
+  }
+  return (
+    "key" in record ||
+    "ctrl" in record ||
+    "meta" in record ||
+    "alt" in record ||
+    "shift" in record
+  );
+};
 
 const isShortcutExtension = (value: unknown): value is ShortcutExtension => {
   if (typeof value !== "object" || value === null) return false;

@@ -217,7 +217,8 @@ export async function applyPagePlaceholders(
     bindings: shortcutSettings.bindings,
     custom: await getClientShortcuts(),
   };
-  const shortcutsScript = `<script>window.__DEGOOG_SHORTCUTS__=${JSON.stringify(shortcutsConfig)}</script>`;
+  const safeShortcuts = JSON.stringify(shortcutsConfig).replace(/<\//g, "<\\/");
+  const shortcutsScript = `<script>window.__DEGOOG_SHORTCUTS__=${safeShortcuts}</script>`;
   result = result.replace("</head>", `${shortcutsScript}\n  </head>`);
 
   result = result.replace(

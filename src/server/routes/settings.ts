@@ -1,4 +1,4 @@
-import { mkdir, readFile, unlink, writeFile } from "fs/promises";
+import { mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import { Hono } from "hono";
 import { outgoingFetch } from "../utils/outgoing";
 import { defaultEnginesFile, shortcutsDir } from "../utils/paths";
@@ -416,11 +416,16 @@ router.post("/api/settings/shortcuts/source", async (c) => {
     return c.json({ error: "Invalid shortcut source" }, 400);
   }
   const base = slugifyIdPart(body.name);
-  const filename = `${makeExtID(base, "shortcut")}.js`;
+  const id = makeExtID(base, "shortcut");
+  const target = `${shortcutsDir()}/${id}.js`;
   await mkdir(shortcutsDir(), { recursive: true });
-  await writeFile(`${shortcutsDir()}/${filename}`, body.source, "utf-8");
+  const overwrite = await stat(target).then(() => true).catch(() => false);
+  if (overwrite) {
+    logger.info("settings", `shortcut source overwritten id=${id}`);
+  }
+  await writeFile(target, body.source, "utf-8");
   await reloadShortcutsRegistry(true);
-  return c.json({ ok: true, id: makeExtID(base, "shortcut") });
+  return c.json({ ok: true, id, overwrite });
 });
 
 router.delete("/api/settings/shortcuts/source/:id", async (c) => {
@@ -430,10 +435,10 @@ router.delete("/api/settings/shortcuts/source/:id", async (c) => {
   if (!id) return c.json({ error: "Missing id" }, 400);
   const file = getEditableShortcutFile(id);
   if (!file) return c.json({ error: "Shortcut is not editable" }, 403);
-  await unlink(file);
   const settings = await readShortcutsSettings();
   delete settings.bindings[id];
   await writeShortcutsSettings(settings);
+  await unlink(file);
   await reloadShortcutsRegistry(true);
   return c.json({ ok: true });
 });

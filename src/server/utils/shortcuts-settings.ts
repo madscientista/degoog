@@ -8,8 +8,23 @@ export interface ShortcutsSettings {
 
 const DEFAULT_SETTINGS: ShortcutsSettings = { bindings: {} };
 const SETTINGS_ID = "shortcuts";
+const MODIFIER_KEYS = ["ctrl", "meta", "alt", "shift"] as const;
+const BINDING_KEYS = new Set<string>(["key", ...MODIFIER_KEYS]);
 
 let cache: ShortcutsSettings | null = null;
+
+const isBinding = (value: unknown): value is ShortcutBinding => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  if (Object.keys(record).some((key) => !BINDING_KEYS.has(key))) return false;
+  if ("key" in record && typeof record.key !== "string") return false;
+  for (const mod of MODIFIER_KEYS) {
+    if (mod in record && typeof record[mod] !== "boolean") return false;
+  }
+  return true;
+};
 
 export const clearShortcutsSettingsCache = (): void => {
   cache = null;
@@ -22,7 +37,9 @@ export const readShortcutsSettings = async (): Promise<ShortcutsSettings> => {
   for (const [id, raw] of Object.entries(stored)) {
     if (typeof raw !== "string") continue;
     try {
-      bindings[id] = JSON.parse(raw) as ShortcutBinding;
+      const parsed: unknown = JSON.parse(raw);
+      if (!isBinding(parsed)) continue;
+      bindings[id] = parsed;
     } catch {
       continue;
     }
