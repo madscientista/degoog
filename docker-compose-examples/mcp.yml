@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
 
   degoog-mcp:
-    image: ghcr.io/degoog-org/degoog-mcp:latest
+    image: ghcr.io/degoog-org/mcp:latest
     depends_on:
       - degoog
     ports:
