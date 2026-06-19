@@ -55,7 +55,9 @@ Ready-to-use compose files live in [`docker-compose-examples/`](docker-compose-e
 <summary>Inline podman</summary>
 
 ```bash
-podman run -d --name degoog -p 4444:4444 -v ./data:/app/data --security-opt label=disable --restart unless-stopped ghcr.io/degoog-org/degoog:latest
+# Set DEGOOG_SETTINGS_PASSWORDS before exposing this instance to the internet -
+# an unlocked instance lets anyone install extensions, which runs code on the server.
+podman run -d --name degoog -p 4444:4444 -v ./data:/app/data -e DEGOOG_SETTINGS_PASSWORDS=changeme --security-opt label=disable --restart unless-stopped ghcr.io/degoog-org/degoog:latest
 ```
 
 </details>
@@ -76,6 +78,9 @@ ContainerName=degoog
 Environment=TZ=<Country/City>
 Environment=PUID=1000
 Environment=PGID=1000
+# Set a password before exposing this instance to the internet - an unlocked
+# instance lets anyone install extensions, which runs code on the server.
+Environment=DEGOOG_SETTINGS_PASSWORDS=changeme
 # Environment=DEGOOG_PUBLIC_INSTANCE=true # Add if public
 UIDMap=+%U:@%U
 Volume=<Path to config>:/app/data:Z
@@ -97,7 +102,9 @@ WantedBy=default.target
 <summary>Inline docker</summary>
 
 ```bash
-docker run -d --name degoog -p 4444:4444 -v ./data:/app/data --restart unless-stopped ghcr.io/degoog-org/degoog:latest
+# Set DEGOOG_SETTINGS_PASSWORDS before exposing this instance to the internet -
+# an unlocked instance lets anyone install extensions, which runs code on the server.
+docker run -d --name degoog -p 4444:4444 -v ./data:/app/data -e DEGOOG_SETTINGS_PASSWORDS=changeme --restart unless-stopped ghcr.io/degoog-org/degoog:latest
 ```
 
 </details>

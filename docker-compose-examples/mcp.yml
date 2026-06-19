@@ -23,6 +23,14 @@ services:
       - "4444:4444"
     networks: [degoog-net]
     restart: unless-stopped
+    environment:
+      # Leave both unset only for trusted local/LAN use. If this instance is
+      # reachable from the internet, SET A PASSWORD: an unlocked instance lets
+      # anyone install extensions, which runs code on the server.
+      DEGOOG_SETTINGS_PASSWORDS: "changeme"
+      # When "true", every admin and store action stays behind the password
+      # above even on a local network.
+      DEGOOG_PUBLIC_INSTANCE: "false"
 
   degoog-mcp:
     image: ghcr.io/degoog-org/mcp:latest

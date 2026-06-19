@@ -20,6 +20,8 @@ import globalRouter from "./routes";
 import { markReady } from "./routes/health";
 import { build404 } from "./routes/pages";
 import { initServerKey } from "./utils/server-key";
+import { isPasswordRequired } from "./routes/settings-auth";
+import { isPublicInstance } from "./utils/public-instance";
 import { initValkey } from "./utils/cache-valkey";
 import { getInstanceId, getInstanceSettings } from "./utils/server-settings";
 import { asBoolean } from "./utils/plugin-settings";
@@ -146,8 +148,8 @@ Promise.all([initServerKey(), initExtensionRegistries()])
         if (handlers?.onUpgrade?.(passwordPath) === false) {
           return {
             onOpen(_evt, ws) { ws.close(1008, "unauthorized"); },
-            onMessage() {},
-            onClose() {},
+            onMessage() { },
+            onClose() { },
           };
         }
         return {
@@ -167,6 +169,13 @@ Promise.all([initServerKey(), initExtensionRegistries()])
 
     Bun.serve({ port, fetch: app.fetch, websocket, idleTimeout: 120 });
     markReady();
+
+    if (!isPasswordRequired() && !isPublicInstance()) {
+      logger.warn(
+        "server",
+        "no admin password set (DEGOOG_SETTINGS_PASSWORDS): store and admin actions are unlocked. This is fine on a trusted local network, but set a password before exposing this instance to the internet. (Setting DEGOOG_PUBLIC_INSTANCE=true also locks these actions). For more info check the docs at https://degoog-org.github.io/docs",
+      );
+    }
   })
   .catch((err) => {
     console.error("[startup] initialization failed", err);
