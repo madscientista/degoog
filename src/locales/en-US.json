@@ -149,6 +149,7 @@
       "domain-score-remove-aria": "Remove rule",
       "domain-score-ui-enable": "Allow scoring from search results",
       "domain-score-ui-desc": "When enabled, authenticated users can score a domain directly from a kebab menu on each result row. Hidden on public or unauthenticated instances regardless of this setting.",
+      "oversized": "<too large to render> {lines} entries ({size}). Edit this list directly in data/search/search-lists.json.",
       "custom-css-heading": "Custom CSS",
       "custom-css-desc": "Inject custom CSS into every page. Loaded after theme and plugin styles, so it overrides them. Use !important when you need to beat selectors with higher specificity.",
       "custom-css-label": "Custom CSS",

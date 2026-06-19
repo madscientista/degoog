@@ -1,6 +1,7 @@
 import { saveField, saveBatch } from "../../utils/settings-api";
 import { bindFieldSaveBtn, createFieldSaveBtn } from "../shared/field-save";
 import { flashError, flashSuccess } from "../shared/flash-msg";
+import { OVERSIZED_CLASS } from "../shared/oversized";
 import { boolStr, el } from "./fields";
 import { serializeScoreRows } from "./domain-score";
 
@@ -90,6 +91,7 @@ export const injectFieldSaveBtns = (getToken: () => string | null): void => {
   for (const field of fields) {
     const key = field.dataset.saveKey;
     if (!key) continue;
+    if (field.classList.contains(OVERSIZED_CLASS)) continue;
     const btn = createFieldSaveBtn();
     field.insertAdjacentElement("afterend", btn);
     field.addEventListener("input", () => { btn.hidden = false; });

@@ -4,29 +4,8 @@ import { getStoredToken } from "../../utils/settings-token";
 import { saveField } from "../../utils/settings-api";
 import { bindFieldSaveBtn, createFieldSaveBtn } from "../shared/field-save";
 import { setIndexerNavVisible } from "./nav";
-import {
-  OVERSIZED_FIELDS_KEY,
-  type OversizedFieldInfo,
-} from "../../../shared/indexer";
+import { markOversized, oversizedMap } from "../shared/oversized";
 import { tr } from "./i18n";
-
-const fmtSize = (chars: number): string => {
-  const mb = chars / (1024 * 1024);
-  return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(chars / 1024))} KB`;
-};
-
-const markOversized = (
-  el: HTMLTextAreaElement,
-  info: OversizedFieldInfo,
-): void => {
-  el.value = "";
-  el.readOnly = true;
-  el.classList.add("degoog-field--oversized");
-  el.placeholder = tr("oversized", {
-    lines: info.lines.toLocaleString(),
-    size: fmtSize(info.chars),
-  });
-};
 
 const _persistField = (key: string, value: string): Promise<boolean> =>
   saveField(key, value, getStoredToken);
@@ -106,8 +85,7 @@ export const wireToggles = async (
   if (maxHitsEl) maxHitsEl.value = str("degoogIndexerMaxHits", "0");
   if (maxAgeDaysEl) maxAgeDaysEl.value = str("degoogIndexerMaxAgeDays", "0");
   if (queryLimitEl) queryLimitEl.value = str("degoogIndexerQueryLimit", "100");
-  const oversized =
-    (settings[OVERSIZED_FIELDS_KEY] as Record<string, OversizedFieldInfo> | undefined) ?? {};
+  const oversized = oversizedMap(settings);
 
   const setListField = (
     el: HTMLTextAreaElement | null,
@@ -115,7 +93,7 @@ export const wireToggles = async (
   ): void => {
     if (!el) return;
     const info = oversized[key];
-    if (info) markOversized(el, info);
+    if (info) markOversized(el, info, (vars) => tr("oversized", vars));
     else el.value = str(key, "");
   };
 

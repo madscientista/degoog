@@ -8,6 +8,7 @@ import type {
 import { setIndexerNavVisible } from "../indexer/nav";
 import { initProxyTest } from "./proxy-test";
 import { bindToggle, el, setToggle, setVal } from "./fields";
+import { markOversized, oversizedMap } from "../shared/oversized";
 import { renderScoreRows, scoreRowTemplate } from "./domain-score";
 import { initHoneypot } from "./honeypot";
 import { bindToggleAutoSave, injectFieldSaveBtns } from "./auto-save";
@@ -35,6 +36,17 @@ async function _loadServerSettings(
     });
     if (!res.ok) return;
     const data = (await res.json()) as ServerSettingsData;
+    const oversized = oversizedMap(data as Record<string, unknown>);
+
+    const setListVal = (id: string, key: string, value?: string): void => {
+      const field = el(id);
+      const info = oversized[key];
+      if (field instanceof HTMLTextAreaElement && info) {
+        markOversized(field, info, (vars) => t(`settings-page.server.oversized`, vars));
+        return;
+      }
+      setVal(id, value);
+    };
 
     setToggle("proxy-enabled", data.proxyEnabled);
     setVal("proxy-urls", data.proxyUrls);
@@ -61,15 +73,15 @@ async function _loadServerSettings(
     setVal("streaming-max-retries", data.streamingMaxRetries);
 
     setToggle("domain-block-enabled", data.domainBlockEnabled);
-    setVal("domain-block-list", data.domainBlockList);
+    setListVal("domain-block-list", "domainBlockList", data.domainBlockList);
     setToggle("domain-block-ui-enabled", data.domainBlockUiEnabled);
 
     setToggle("domain-replace-enabled", data.domainReplaceEnabled);
-    setVal("domain-replace-list", data.domainReplaceList);
+    setListVal("domain-replace-list", "domainReplaceList", data.domainReplaceList);
     setToggle("domain-replace-ui-enabled", data.domainReplaceUiEnabled);
 
     setToggle("domain-score-enabled", data.domainScoreEnabled);
-    renderScoreRows(data.domainScoreList ?? "");
+    if (!oversized.domainScoreList) renderScoreRows(data.domainScoreList ?? "");
     setToggle("domain-score-ui-enabled", data.domainScoreUiEnabled);
 
     setVal("custom-css", data.customCss);

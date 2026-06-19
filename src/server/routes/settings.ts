@@ -27,14 +27,30 @@ import {
   writeIndexerList,
 } from "../indexer/config/lists";
 import {
+  isDomainListKey,
+  readDomainLists,
+  writeDomainList,
+} from "../utils/domain-lists";
+import {
   MAX_INLINE_FIELD_CHARS,
   OVERSIZED_FIELDS_KEY,
   OVERSIZED_TEXT_FIELDS,
   type OversizedFieldInfo,
 } from "../../shared/indexer";
+import { SEARCH_LIST_FIELDS } from "../../shared/settings-lists";
 import { logger } from "../utils/logger";
 
 const router = new Hono();
+
+const LIST_FIELDS = [...OVERSIZED_TEXT_FIELDS, ...SEARCH_LIST_FIELDS] as const;
+
+const isListField = (key: string): boolean =>
+  isIndexerListKey(key) || isDomainListKey(key);
+
+const writeListField = async (key: string, value: string): Promise<void> => {
+  if (isIndexerListKey(key)) await writeIndexerList(key, value);
+  else if (isDomainListKey(key)) await writeDomainList(key, value);
+};
 
 const _normalizeHostname = (raw: string): string =>
   raw
@@ -111,7 +127,7 @@ const _applySchemaUpdates = (
   for (const [key, def] of Object.entries(SETTINGS_SCHEMA)) {
     const raw = body[key];
     if (raw === undefined || typeof raw !== "string") continue;
-    if (isIndexerListKey(key)) continue;
+    if (isListField(key)) continue;
     updates[key] = coerceSetting(def, raw);
   }
   return updates;
@@ -131,7 +147,7 @@ const trimBigFields = (
 ): Record<string, unknown> => {
   const out: Record<string, unknown> = { ...settings };
   const oversized: Record<string, OversizedFieldInfo> = {};
-  for (const key of OVERSIZED_TEXT_FIELDS) {
+  for (const key of LIST_FIELDS) {
     const value = settings[key];
     if (typeof value === "string" && value.length > MAX_INLINE_FIELD_CHARS) {
       oversized[key] = { chars: value.length, lines: _countLines(value) };
@@ -145,9 +161,9 @@ const trimBigFields = (
 const _persistListFields = async (
   body: Record<string, string>,
 ): Promise<void> => {
-  for (const key of OVERSIZED_TEXT_FIELDS) {
+  for (const key of LIST_FIELDS) {
     const raw = body[key];
-    if (typeof raw === "string") await writeIndexerList(key, raw);
+    if (typeof raw === "string") await writeListField(key, raw);
   }
 };
 
@@ -177,8 +193,9 @@ router.get("/api/settings/general", async (c) => {
   const denied = await guardSettingsRoute(c, "GET /api/settings/general");
   if (denied) return denied;
   const settings = await getInstanceSettings();
-  const lists = await readIndexerLists();
-  return c.json(trimBigFields({ ...settings, ...lists }));
+  const indexerLists = await readIndexerLists();
+  const domainLists = await readDomainLists();
+  return c.json(trimBigFields({ ...settings, ...indexerLists, ...domainLists }));
 });
 
 router.post("/api/settings/general", async (c) => {
@@ -207,8 +224,8 @@ router.post("/api/settings/field", async (c) => {
     return c.json({ error: "Invalid value" }, 400);
   }
   const coerced = coerceSetting(SETTINGS_SCHEMA[key as SettingKey], value);
-  if (isIndexerListKey(key)) {
-    await writeIndexerList(key, typeof coerced === "string" ? coerced : value);
+  if (isListField(key)) {
+    await writeListField(key, typeof coerced === "string" ? coerced : value);
   } else {
     await updateInstanceSettings({ [key]: coerced });
   }
@@ -232,15 +249,15 @@ router.post("/api/settings/domain-action", async (c) => {
   if (!source) return c.json({ error: "Missing source" }, 400);
 
   const existing = await getInstanceSettings();
-  const updates: Record<string, string> = {};
+  const lists = await readDomainLists();
 
   if (kind === "block") {
     if (!asBoolean(existing.domainBlockUiEnabled)) {
       return c.json({ error: "Forbidden" }, 403);
     }
-    updates.domainBlockList = _appendBlock(
-      asString(existing.domainBlockList),
-      source,
+    await writeDomainList(
+      "domainBlockList",
+      _appendBlock(lists.domainBlockList, source),
     );
   } else if (kind === "replace") {
     if (!asBoolean(existing.domainReplaceUiEnabled)) {
@@ -248,10 +265,9 @@ router.post("/api/settings/domain-action", async (c) => {
     }
     const target = _normalizeHostname(body.target ?? "");
     if (!target) return c.json({ error: "Missing target" }, 400);
-    updates.domainReplaceList = _appendReplace(
-      asString(existing.domainReplaceList),
-      source,
-      target,
+    await writeDomainList(
+      "domainReplaceList",
+      _appendReplace(lists.domainReplaceList, source, target),
     );
   } else if (kind === "score") {
     if (!asBoolean(existing.domainScoreUiEnabled)) {
@@ -261,16 +277,14 @@ router.post("/api/settings/domain-action", async (c) => {
     if (!Number.isFinite(score)) {
       return c.json({ error: "Invalid score" }, 400);
     }
-    updates.domainScoreList = _upsertScore(
-      asString(existing.domainScoreList),
-      source,
-      Math.trunc(score),
+    await writeDomainList(
+      "domainScoreList",
+      _upsertScore(lists.domainScoreList, source, Math.trunc(score)),
     );
   } else {
     return c.json({ error: "Invalid kind" }, 400);
   }
 
-  await setInstanceSettings({ ...existing, ...updates });
   return c.json({ ok: true });
 });
 

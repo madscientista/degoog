@@ -134,6 +134,7 @@
       "domain-score-remove-aria": "Rimuovi regola",
       "domain-score-ui-enable": "Abilita punteggio dai risultati di ricerca",
       "domain-score-ui-desc": "Quando abilitato, gli utenti autenticati possono punteggiare un dominio direttamente dal menu a tendina su ogni riga di risultati. Nascondi su istanze pubbliche o non autenticate indipendentemente da questa impostazione.",
+      "oversized": "<troppo grande da mostrare> {lines} voci ({size}). Modifica questa lista direttamente in data/search/search-lists.json.",
       "honeypot-heading": "Controllo bot",
       "honeypot-desc": "Proteggi la tua istanza da bot e scraper. Le trappole honeypot attirano e bloccano i crawler; la verifica del browser controlla che le richieste provengano da un browser reale tramite un token CSS firmato iniettato in ogni pagina.",
       "honeypot-enable": "Attiva le trappole honeypot",

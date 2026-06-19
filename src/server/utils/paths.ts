@@ -46,6 +46,9 @@ export const blocklistFile = (): string =>
 export const serverSettingsFile = (): string =>
   process.env.DEGOOG_SERVER_SETTINGS_FILE ?? join(_dataDir(), "server-settings.json");
 
+export const searchListsFile = (): string =>
+  process.env.DEGOOG_SEARCH_LISTS_FILE ?? join(_dataDir(), "search", "search-lists.json");
+
 export const indexerDir = (): string =>
   process.env.DEGOOG_INDEXER_DIR ?? join(_dataDir(), "indexer");
 
