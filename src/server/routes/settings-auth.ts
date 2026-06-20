@@ -150,7 +150,7 @@ export function isPasswordRequired(): boolean {
 }
 
 export async function gandalf(token: string | undefined): Promise<boolean> {
-  if (isPublicInstance() && !isPasswordRequired() && !isDangerouslyNoPassword()) return false;
+  if (isPublicInstance() && !isPasswordRequired()) return false;
   const required = await isAuthRequired();
   if (!required) return true;
   if (!token) {
@@ -251,7 +251,7 @@ router.get("/api/settings/auth/callback", async (c) => {
 });
 
 router.post("/api/settings/auth", async (c) => {
-  if (isPublicInstance() && !isPasswordRequired() && !isDangerouslyNoPassword())
+  if (isPublicInstance() && !isPasswordRequired())
     return c.json({ error: "You shall not pass!" }, 401);
   const ip = getClientIp(c) ?? "unknown";
   const rate = checkAuthRate(ip);

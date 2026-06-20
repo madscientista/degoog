@@ -13,7 +13,6 @@ import { getAdminPath, isPublicInstance } from "../utils/public-instance";
 import {
   canBalrogPass,
   hasGeneratedDefaultSettingsPassword,
-  isDangerouslyNoPassword,
   isPasswordRequired,
   shouldServeSettingsGate,
   gandalf,
@@ -191,7 +190,7 @@ for (const ap of _adminPaths) {
   );
 
   router.get(`/${ap}`, async (c) => {
-    if (isPublicInstance() && !isPasswordRequired() && !isDangerouslyNoPassword())
+    if (isPublicInstance() && !isPasswordRequired())
       return c.text("Not Found", 404);
     const locale = getLocale(c);
     if (await shouldServeSettingsGate(c)) {
@@ -201,7 +200,7 @@ for (const ap of _adminPaths) {
   });
 
   router.get(`/${ap}/:tab`, async (c) => {
-    if (isPublicInstance() && !isPasswordRequired() && !isDangerouslyNoPassword())
+    if (isPublicInstance() && !isPasswordRequired())
       return c.text("Not Found", 404);
     const tab = c.req.param("tab");
     if (!(SETTINGS_TABS as readonly string[]).includes(tab)) {

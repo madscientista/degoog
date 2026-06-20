@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -14,6 +14,8 @@ import {
   setInstanceSettings,
 } from "../../src/server/utils/server-settings";
 import { clearShortcutsSettingsCache } from "../../src/server/utils/shortcuts-settings";
+
+let savedDangerouslyNoPassword: string | undefined;
 
 const get = (path: string): Promise<Response> =>
   Promise.resolve(router.request(`http://localhost${path}`));
@@ -31,8 +33,18 @@ const post = (path: string, body: unknown): Promise<Response> =>
 
 describe("settings shortcut routes", () => {
   beforeAll(() => {
+    savedDangerouslyNoPassword = process.env.DEGOOG_DANGEROUSLY_NO_PASSWORD;
     delete process.env.DEGOOG_PUBLIC_INSTANCE;
     delete process.env.DEGOOG_SETTINGS_PASSWORDS;
+    process.env.DEGOOG_DANGEROUSLY_NO_PASSWORD = "true";
+  });
+
+  afterAll(() => {
+    if (savedDangerouslyNoPassword !== undefined) {
+      process.env.DEGOOG_DANGEROUSLY_NO_PASSWORD = savedDangerouslyNoPassword;
+    } else {
+      delete process.env.DEGOOG_DANGEROUSLY_NO_PASSWORD;
+    }
   });
 
   beforeEach(() => {

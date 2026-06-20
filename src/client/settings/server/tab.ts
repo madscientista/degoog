@@ -259,13 +259,14 @@ const _renderPresetPreview = (): void => {
   const changed = _presetChanges(preset.values).filter(
     ({ current, next }) => current !== next,
   );
-  if (apply) apply.disabled = false;
   if (changed.length === 0) {
+    if (apply) apply.disabled = true;
     _renderListItems(changeList, [
       t("settings-page.server.presets.no-changes"),
     ]);
     return;
   }
+  if (apply) apply.disabled = false;
   _renderListItems(
     changeList,
     changed.map(({ key, current, next }) =>
