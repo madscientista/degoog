@@ -120,11 +120,21 @@ const _escapeHtml = (value: string): string =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+const _highlightEnvVars = (text: string): string =>
+  text.replace(/DEGOOG_[A-Z_]+(?:=[A-Za-z0-9]+)?/g, "<code>$&</code>");
+
+const _buildGateNote = (text: string): string =>
+  `<div class="settings-auth-note" role="note">
+      <p class="settings-auth-note-text">${_highlightEnvVars(_escapeHtml(text))}</p>
+    </div>`;
+
 const _buildSettingsGatePage = async (locale?: string): Promise<string> => {
   const html = await buildPage("settings-gate.html", locale);
   const t = await getCoreTranslator();
   const note = hasGeneratedDefaultSettingsPassword()
-    ? `<p class="settings-auth-help">${_escapeHtml(t("settings-page.gate.generated-password-note", undefined, locale))}</p>`
+    ? _buildGateNote(
+      t("settings-page.gate.generated-password-note", undefined, locale),
+    )
     : "";
   return html.replace("__SETTINGS_AUTH_DEFAULT_PASSWORD_NOTE__", note);
 };
@@ -231,13 +241,13 @@ router.get("/opensearch.xml", (c) => {
     new URL(c.req.url).host;
   const basePath = BASE_URL
     ? (() => {
-        try {
-          return new URL(BASE_URL).pathname.replace(/\/+$/, "");
-        } catch (err) {
-          logger.debug("pages", `invalid DEGOOG_BASE_URL "${BASE_URL}"`, err);
-          return BASE_URL;
-        }
-      })()
+      try {
+        return new URL(BASE_URL).pathname.replace(/\/+$/, "");
+      } catch (err) {
+        logger.debug("pages", `invalid DEGOOG_BASE_URL "${BASE_URL}"`, err);
+        return BASE_URL;
+      }
+    })()
     : "";
   return c.body(buildOpenSearchXml(`${proto}://${host}${basePath}`), 200, {
     "Content-Type": "application/opensearchdescription+xml; charset=utf-8",

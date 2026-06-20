@@ -41,23 +41,61 @@ const _explicitPasswords = (): string[] => {
 export const hasGeneratedDefaultSettingsPassword = (): boolean =>
   _explicitPasswords().length === 0 && !isDangerouslyNoPassword();
 
+const _noColor = !!process.env.NO_COLOR;
+const _ansi = (code: string): string => (_noColor ? "" : code);
+const ANSI_BLUE = _ansi("\x1b[38;2;66;133;244m");
+const ANSI_YELLOW = _ansi("\x1b[38;2;251;188;5m");
+const ANSI_GREEN = _ansi("\x1b[38;2;52;168;83m");
+const ANSI_BOLD = _ansi("\x1b[1m");
+const ANSI_RESET = _ansi("\x1b[0m");
+const ACCENT_BAR = `${ANSI_YELLOW}┃${ANSI_RESET}`;
+
+const _barLine = (text = ""): string => ` ${ACCENT_BAR} ${text}`;
+
+const _envVar = (name: string): string => `${ANSI_BLUE}${name}${ANSI_RESET}`;
+
+const _authBanner = (title: string, lines: string[]): string =>
+  [
+    "",
+    _barLine(`${ANSI_YELLOW}${ANSI_BOLD}${title}${ANSI_RESET}`),
+    _barLine(),
+    ...lines.map((line) => _barLine(line)),
+    "",
+  ].join("\n");
+
+const _otherOptionLines = (): string[] => [
+  "",
+  "Other options:",
+  `  - ${_envVar("DEGOOG_PUBLIC_INSTANCE=true")} runs a public instance and`,
+  "    auto-locks sensitive admin actions.",
+  `  - ${_envVar("DEGOOG_SETTINGS_PATH=<path>")} moves settings away from the`,
+  "    default /settings (or /admin) URL.",
+];
+
 export function logSettingsPasswordStatus(): void {
   const explicit = _explicitPasswords();
   if (explicit.length > 0) return;
   if (isDangerouslyNoPassword()) {
-    logger.warn(
-      "server",
-      "DEGOOG_DANGEROUSLY_NO_PASSWORD is enabled: settings/admin authentication is disabled. Only use this on a trusted local network.",
+    console.warn(
+      _authBanner("Settings authentication is disabled", [
+        `${_envVar("DEGOOG_DANGEROUSLY_NO_PASSWORD")} is enabled, so the settings`,
+        "and admin areas are open. Only use this on a trusted local network.",
+        ..._otherOptionLines(),
+      ]),
     );
     return;
   }
-  logger.warn(
-    "server",
-    `DEGOOG_SETTINGS_PASSWORDS is not set. Generated temporary settings password for this process: ${GENERATED_PASSWORD}`,
-  );
-  logger.warn(
-    "server",
-    "Set DEGOOG_SETTINGS_PASSWORDS to choose a stable password, or set DEGOOG_DANGEROUSLY_NO_PASSWORD=true to intentionally disable settings/admin authentication.",
+  console.warn(
+    _authBanner("Temporary settings password", [
+      `${_envVar("DEGOOG_SETTINGS_PASSWORDS")} is not set, so Degoog generated a`,
+      "one-off password for this run. Sign in to settings with:",
+      "",
+      `   ${ANSI_GREEN}${ANSI_BOLD}${GENERATED_PASSWORD}${ANSI_RESET}`,
+      "",
+      `Set ${_envVar("DEGOOG_SETTINGS_PASSWORDS")} to keep a stable password, or`,
+      `set ${_envVar("DEGOOG_DANGEROUSLY_NO_PASSWORD=true")} to disable the gate.`,
+      ..._otherOptionLines(),
+    ]),
   );
 }
 

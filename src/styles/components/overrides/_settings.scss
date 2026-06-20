@@ -537,6 +537,24 @@
   }
 }
 
+.settings-auth-lock {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: $radius-full;
+  background: var(--bg-light);
+  color: $primary;
+  font-size: $font-size-xl;
+  margin-bottom: $space-1;
+
+  &--warn {
+    color: $warning;
+  }
+}
+
 .settings-auth-desc {
   color: var(--text-secondary);
   text-align: center;
@@ -579,12 +597,26 @@
   min-height: $space-5;
 }
 
-.settings-auth-help {
+.settings-auth-note {
+  background: var(--bg-light);
+  border-radius: $radius-xl;
+  padding: $space-4 $space-5;
+}
+
+.settings-auth-note-text {
   color: var(--text-secondary);
   font-size: $font-size-small;
-  line-height: 1.4;
-  margin: (-$space-1) 0 0;
-  text-align: center;
+  line-height: 1.5;
+  margin: 0;
+
+  code {
+    background: var(--bg);
+    border-radius: $radius-sm;
+    padding: 0.15em 0.4em;
+    font-size: 0.9em;
+    color: var(--text-primary);
+    word-break: break-word;
+  }
 }
 
 .settings-auth-submit {
