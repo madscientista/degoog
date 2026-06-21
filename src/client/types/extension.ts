@@ -7,6 +7,7 @@ export type SettingFieldType =
   | "textarea"
   | "select"
   | "urllist"
+  | "list"
   | "info";
 
 export interface SettingField {
@@ -22,6 +23,8 @@ export interface SettingField {
   default?: string;
   advanced?: boolean;
   visibleWhen?: { key: string; equals: string };
+  itemSchema?: SettingField[];
+  addLabel?: string;
 }
 
 export interface ExtensionMeta {

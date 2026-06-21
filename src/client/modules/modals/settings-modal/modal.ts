@@ -1,4 +1,5 @@
 import { renderField, initUrlList, syncConditionalFields } from "./modal-fields";
+import { initListFields } from "./list-field";
 import { getBase } from "../../../utils/base-url";
 import { getStoredToken } from "../../settings/settings";
 import { jsonHeaders } from "../../../utils/request";
@@ -114,6 +115,13 @@ const _collectValues = (): Record<string, string | string[]> => {
       }
       return;
     }
+    if (type === "list") {
+      const hidden = fieldEl.querySelector<HTMLInputElement>(
+        ".ext-field-list-value",
+      );
+      values[key] = hidden?.value?.trim() || "[]";
+      return;
+    }
 
     const input =
       fieldEl.querySelector<HTMLTextAreaElement>("textarea") ||
@@ -142,6 +150,11 @@ const _advancedFieldDiffersFromDefault = (
 
   if (field.type === "urllist") {
     return Array.isArray(raw) && raw.length > 0;
+  }
+
+  if (field.type === "list") {
+    const val = typeof raw === "string" ? raw.trim() : "";
+    return val !== "" && val !== "[]";
   }
 
   if (raw === undefined) {
@@ -231,6 +244,7 @@ export function openModal(ext: ExtensionMeta): void {
       });
     _initTestButton(bodyEl);
     initUrlList(bodyEl);
+    initListFields(bodyEl);
     syncConditionalFields(bodyEl);
     bodyEl
       .querySelectorAll<HTMLElement>(".ext-field-input--configured")

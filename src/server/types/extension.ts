@@ -56,6 +56,8 @@ export interface SettingField {
   | "toggle"
   | "textarea"
   | "select"
+  | "urllist"
+  | "list"
   | "info";
   required?: boolean;
   placeholder?: string;
@@ -66,6 +68,8 @@ export interface SettingField {
   default?: string;
   advanced?: boolean;
   visibleWhen?: { key: string; equals: string };
+  itemSchema?: SettingField[];
+  addLabel?: string;
 }
 
 export interface PluginManifest {

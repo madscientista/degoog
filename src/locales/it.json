@@ -270,6 +270,7 @@
       "test-testing": "Verifica in corso…",
       "test-request-failed": "Richiesta non riuscita",
       "field-remove-aria": "Rimuovi",
+      "field-edit-aria": "Modifica",
       "field-add": "Aggiungi"
     },
     "confirm": {
