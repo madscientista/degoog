@@ -83,8 +83,8 @@
           "desc": "For single-user LAN or homelab deployments where convenience matters and the network is trusted."
         },
         "private-team": {
-          "label": "Private Team / Semi-Lax",
-          "desc": "For a small trusted team behind auth, VPN, or a private reverse proxy."
+          "label": "Family / Semi-Lax",
+          "desc": "For a small trusted set of people behind auth, VPN, or a private reverse proxy."
         },
         "public-web": {
           "label": "Public Web Instance",
@@ -290,6 +290,7 @@
       "test-testing": "Testing…",
       "test-request-failed": "Request failed",
       "field-remove-aria": "Remove",
+      "field-edit-aria": "Edit",
       "field-add": "Add"
     },
     "confirm": {

@@ -270,6 +270,7 @@
       "test-testing": "בודק...",
       "test-request-failed": "הבקשה נכשלה",
       "field-remove-aria": "הסר",
+      "field-edit-aria": "ערוך",
       "field-add": "הוסף"
     },
     "confirm": {

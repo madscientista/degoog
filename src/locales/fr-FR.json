@@ -276,6 +276,7 @@
       "test-testing": "Test en cours…",
       "test-request-failed": "Échec de la requête",
       "field-remove-aria": "Retirer",
+      "field-edit-aria": "Modifier",
       "field-add": "Ajouter"
     },
     "confirm": {
