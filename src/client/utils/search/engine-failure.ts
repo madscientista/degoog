@@ -1,5 +1,5 @@
 import type { EngineTiming } from "../../types";
-import { escapeHtml } from "../../utils/dom";
+import { escapeAttribute } from "../../utils/dom";
 
 const t = window.scopedT("themes/degoog");
 
@@ -17,5 +17,5 @@ export const engineFailureText = (et: EngineTiming): string => {
 export const engineCountHtml = (et: EngineTiming, label: string): string => {
   const reason = engineFailureText(et);
   if (!reason) return label;
-  return `<span class="engine-stat-reason" data-tooltip="${escapeHtml(reason)}" tabindex="0">${label}</span>`;
+  return `<span class="engine-stat-reason" data-tooltip="${escapeAttribute(reason)}" tabindex="0">${label}</span>`;
 };
