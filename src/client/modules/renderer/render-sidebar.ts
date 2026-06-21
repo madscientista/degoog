@@ -2,6 +2,7 @@ import { state } from "../../state";
 import type { SearchResponse, SlotPanel } from "../../types";
 import { escapeHtml } from "../../utils/dom";
 import { retryEngine } from "../../utils/search-actions";
+import { engineCountHtml } from "../../utils/search/engine-failure";
 
 const t = window.scopedT("themes/degoog");
 
@@ -140,9 +141,15 @@ export function renderSidebar(
       const barWidth = Math.min(100, (et.time / maxTime) * 100);
       const isIndexed = et.resultCount === 0 && et.indexed === true;
       const statusClass = et.resultCount === 0 && !isIndexed ? " engine-failed" : "";
+      const resultsLabel = t("search-templates.sidebar.results", {
+        count: String(et.resultCount),
+      });
+      const countHtml = isIndexed
+        ? resultsLabel
+        : engineCountHtml(et, resultsLabel);
       const metaText = isIndexed
         ? `${t("search-templates.result.just-indexed")} · ${et.time}ms`
-        : `${t("search-templates.sidebar.results", { count: String(et.resultCount) })} · ${et.time}ms`;
+        : `${countHtml} · ${et.time}ms`;
       const action = isIndexed
         ? ""
         : `<a class="engine-retry-link degoog-link" data-engine="${escapeHtml(et.name)}">${t("search-templates.sidebar.retry")}</a>`;

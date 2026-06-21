@@ -2,6 +2,7 @@ import { state } from "../../state";
 import type { EngineTiming, ScoredResult } from "../../types";
 import { renderTemplate } from "../../utils/template";
 import { buildResultContext } from "../../modules/renderer/render";
+import { engineCountHtml } from "./engine-failure";
 
 const t = window.scopedT("themes/degoog");
 
@@ -125,9 +126,12 @@ export function updateEngineTimings(
       : et.resultCount === 0
         ? " engine-failed"
         : "";
+    const resultsLabel = t("search-templates.sidebar.results", {
+      count: String(et.resultCount),
+    });
     const meta = isRetrying
       ? `${t("search-templates.sidebar.retrying")} · ${et.time}ms`
-      : `${t("search-templates.sidebar.results", { count: String(et.resultCount) })} · ${et.time}ms`;
+      : `${engineCountHtml(et, resultsLabel)} · ${et.time}ms`;
     html += `
       <div class="engine-stat-row${statusClass}">
         <div class="engine-stat-info">

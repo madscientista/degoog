@@ -90,7 +90,17 @@
       "info": "Info",
       "results": "{count} résultats",
       "retry": "réessayer",
-      "retrying": "réessai en cours..."
+      "retrying": "réessai en cours...",
+      "failure-reasons": {
+        "blocked": "Bloqué par le moteur",
+        "rate_limited": "Trop de requêtes",
+        "captcha": "Vérification CAPTCHA",
+        "parse_error": "Réponse illisible",
+        "timeout": "Délai dépassé",
+        "network": "Erreur réseau",
+        "interstitial": "Bloqué par une page intermédiaire",
+        "unknown": "Aucune réponse exploitable de ce moteur"
+      }
     },
     "result": {
       "just-indexed": "vient d'être indexé",

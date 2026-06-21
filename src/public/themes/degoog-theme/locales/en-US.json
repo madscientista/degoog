@@ -90,7 +90,17 @@
       "info": "Info",
       "results": "{count} results",
       "retry": "retry",
-      "retrying": "retrying..."
+      "retrying": "retrying...",
+      "failure-reasons": {
+        "blocked": "Blocked by the engine",
+        "rate_limited": "Rate limited",
+        "captcha": "CAPTCHA challenge",
+        "parse_error": "Could not read the response",
+        "timeout": "Timed out",
+        "network": "Network error",
+        "interstitial": "Blocked by an interstitial page",
+        "unknown": "No usable response from this engine"
+      }
     },
     "result": {
       "just-indexed": "just indexed",
