@@ -7,14 +7,7 @@ import {
 import { getBaseUrl } from "../../../../utils/base-url";
 import { outgoingFetch } from "../../../../utils/outgoing";
 import { logger } from "../../../../utils/logger";
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+import { escapeHtml } from "../../../../utils/text";
 
 export const ipCommand: BangCommand = {
   name: "IP Lookup",
