@@ -1,8 +1,8 @@
 {
   "app": {
-    "title": "degoog",
-    "name": "Degoog",
-    "description": "degoog is an alternative search engine aggregator."
+    "title": "KuruSearch",
+    "name": "KuruSearch",
+    "description": "KuruSearch is an alternative search engine aggregator"
   },
   "index-templates": {
     "footer": {
