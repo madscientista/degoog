@@ -146,7 +146,7 @@ export async function performStreamingSearch(
   }
   const glanceEl = document.getElementById("at-a-glance");
   if (glanceEl) glanceEl.innerHTML = type === "web" ? skeletonGlance() : "";
-  document.title = `${query} - degoog`;
+  document.title = `${query} - KuruSearch`;
 
   const urlParams = new URLSearchParams({ q: query });
   if (type !== "web") urlParams.set("type", type);
