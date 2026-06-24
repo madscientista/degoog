@@ -1,7 +1,7 @@
 <p align="center">
   <img src="src/public/images/degoog-logo.png" alt="Degoog Logo" width="100">
   <br />
-  <h1 align="center">degoog</h1><br/>
+  <h1 align="center">KuruSearch</h1><br/>
 </p>
 
 Search aggregator that queries multiple engines and shows results in one place. You can add custom search engines, bang-command plugins, slot plugins (query-triggered panels above/below results or in the sidebar), and transports (custom HTTP fetch strategies like curl, FlareSolverr, or your own). The dream would be to eventually have a user made marketplace for plugins/engines.
